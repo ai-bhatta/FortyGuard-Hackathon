@@ -13,6 +13,7 @@ AssetShield AI turns FortyGuard temperature intelligence into an explainable mai
 - Risk classifications: Low, Moderate, High, Critical.
 - Recommendation logic: Monitor, Review during next maintenance window, Schedule Inspection, Prioritize Inspection.
 - Frontend/AI-ready payload builder in `assetshield_backend.py`.
+- FastAPI HTTP endpoints in `api_server.py` for frontend integration.
 - Tests for scoring boundaries, critical/high cases, demo asset loading, and ranked output.
 
 This is a transparent prioritization model for heat exposure and inspection attention. It does not predict exact equipment failure.
@@ -56,6 +57,30 @@ uv run python assetshield_backend.py
 
 The script prints assets ranked by score, highest risk first.
 
+## Run The HTTP API
+
+```bash
+uv run uvicorn api_server:app --reload
+```
+
+Default local URL:
+
+```text
+http://127.0.0.1:8000
+```
+
+Frontend handoff endpoints:
+
+- `GET /health`: backend health check.
+- `GET /assets`: raw California demo asset inventory.
+- `GET /risks`: ranked scored assets, highest risk first.
+- `GET /risks?risk_level=High`: filter by risk level.
+- `GET /risks?asset_type=Telecom`: filter by asset type.
+- `GET /risks/{asset_id}`: one asset detail with score breakdown.
+- `GET /docs`: interactive FastAPI docs.
+
+By default, endpoints use cached demo data. To call FortyGuard live, pass `live=true`, for example `GET /risks?live=true`, and set `ASSETSHIELD_USE_LIVE_API=true` plus `FORTYGUARD_API_KEY` in `.env`.
+
 ## Run Tests
 
 ```bash
@@ -68,10 +93,11 @@ uv run pytest
 - `services/fortyguard.py`: single integration point for live FortyGuard data or cached demo data.
 - `risk/scoring.py`: calculates the 0-100 score and factor-by-factor explanation.
 - `assetshield_backend.py`: builds the structured ranked report for Streamlit, React, or the AI Copilot.
+- `api_server.py`: exposes the backend over HTTP for the frontend.
 
 ## Remaining Work
 
-- Connect this payload to the Person 1 dashboard UI.
+- Connect these endpoints to the frontend dashboard UI.
 - Connect the same structured facts to the AssetShield Copilot.
 - Capture a few real successful FortyGuard responses and store them as clearly labelled cached demo data for final presentation reliability.
 - Expand tests once the frontend and copilot integration are added.
