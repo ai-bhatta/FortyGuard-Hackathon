@@ -1,8 +1,9 @@
+import json
 import os
 import sys
 import pandas as pd
 
-# Dynamic path resolution to project root
+# Add root directory to sys.path so modules (services, risk) can be imported
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
 if ROOT_DIR not in sys.path:
@@ -15,18 +16,24 @@ from services.fortyguard import WeatherSnapshot
 
 def load_asset_data() -> pd.DataFrame:
     csv_path = os.path.join(ROOT_DIR, "data", "assets.csv")
+    cache_path = os.path.join(ROOT_DIR, "data", "fortyguard_cache.json")
 
     if not os.path.exists(csv_path):
         raise FileNotFoundError(f"Could not locate assets.csv at: {csv_path}")
 
-    # Read exactly from assets.csv
+    # Load cached weather data by asset_id
+    weather_cache = {}
+    if os.path.exists(cache_path):
+        with open(cache_path, "r") as f:
+            weather_cache = json.load(f)
+
     df_csv = pd.read_csv(csv_path)
     processed_records = []
 
     for _, row in df_csv.iterrows():
         asset_id = str(row["asset_id"])
-        
-        # 1. Map Asset strictly from CSV values
+
+        # 1. Map Asset from assets.csv
         asset = Asset(
             asset_id=asset_id,
             asset_name=str(row["asset_name"]),
@@ -39,27 +46,21 @@ def load_asset_data() -> pd.DataFrame:
             past_heat_incidents=int(row["past_heat_incidents"]),
         )
 
-        # 2. Extract or safely default dynamic columns directly from CSV
-        # (Uses CSV column if available, falls back to asset threshold baseline if not)
-        temp_c = float(row.get("temperature", row["heat_threshold_celsius"] + 2.4))
-        apparent_temp_c = float(row.get("apparent_temperature", temp_c + 3.0))
-        hours_above = int(row.get("hours_above_threshold", 4))
-        humidity = float(row.get("relative_humidity_percent", 45.0))
-        heat_index = float(row.get("heat_index_celsius", apparent_temp_c))
-        solar_irradiance = float(row.get("solar_irradiance_wm2", 800.0))
+        # 2. Retrieve dynamic weather data for this asset_id from cache
+        asset_weather = weather_cache.get(asset_id, {})
 
         weather = WeatherSnapshot(
             asset_id=asset_id,
-            temperature_celsius=temp_c,
-            apparent_temperature_celsius=apparent_temp_c,
-            relative_humidity_percent=humidity,
-            heat_index_celsius=heat_index,
-            solar_irradiance_wm2=solar_irradiance,
-            hours_above_threshold=hours_above,
-            source="FortyGuard",
+            temperature_celsius=float(asset_weather.get("temperature_celsius", 35.0)),
+            apparent_temperature_celsius=float(asset_weather.get("apparent_temperature_celsius", 37.0)),
+            relative_humidity_percent=float(asset_weather.get("relative_humidity_percent", 40.0)),
+            heat_index_celsius=float(asset_weather.get("heat_index_celsius", 36.5)),
+            solar_irradiance_wm2=float(asset_weather.get("solar_irradiance_wm2", 800.0)),
+            hours_above_threshold=int(asset_weather.get("hours_above_threshold", 0)),
+            source=str(asset_weather.get("source", "cached_demo")),
         )
 
-        # 3. Compute risk score via risk engine
+        # 3. Compute real-time risk score using actual cached weather data
         risk_result = score_asset(asset, weather)
 
         processed_records.append({
