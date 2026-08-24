@@ -1,0 +1,86 @@
+import pandas as pd
+
+
+def load_asset_data():
+
+    data = [
+        {
+            "asset_id": "AST-001",
+            "asset_name": "Compressor C-14",
+            "asset_type": "Compressor",
+            "latitude": 34.039742,
+            "longitude": -118.246428,
+            "temperature": 46.2,
+            "threshold": 40.0,
+            "risk_score": 94,
+            "risk_level": "Critical",
+        },
+        {
+            "asset_id": "AST-002",
+            "asset_name": "Storage Tank T-03",
+            "asset_type": "Storage Tank",
+            "latitude": 34.039742,
+            "longitude": -118.246428,
+            "temperature": 44.8,
+            "threshold": 40.0,
+            "risk_score": 86,
+            "risk_level": "High",
+        },
+        {
+            "asset_id": "AST-003",
+            "asset_name": "Generator G-02",
+            "asset_type": "Generator",
+            "latitude": 34.039742,
+            "longitude": -118.246428,
+            "temperature": 43.6,
+            "threshold": 40.0,
+            "risk_score": 81,
+            "risk_level": "High",
+        },
+        {
+            "asset_id": "AST-004",
+            "asset_name": "Pump P-07",
+            "asset_type": "Pump",
+            "latitude": 34.039742,
+            "longitude": -118.246428,
+            "temperature": 38.7,
+            "threshold": 40.0,
+            "risk_score": 58,
+            "risk_level": "Moderate",
+        },
+        {
+            "asset_id": "AST-005",
+            "asset_name": "Motor M-11",
+            "asset_type": "Motor",
+            "latitude": 34.039742,
+            "longitude": -118.246428,
+            "temperature": 36.4,
+            "threshold": 40.0,
+            "risk_score": 43,
+            "risk_level": "Moderate",
+        },
+        {
+            "asset_id": "AST-006",
+            "asset_name": "Cooling Unit CU-04",
+            "asset_type": "Cooling",
+            "latitude": 34.039742,
+            "longitude": -118.246428,
+            "temperature": 31.2,
+            "threshold": 40.0,
+            "risk_score": 21,
+            "risk_level": "Low",
+        },
+        {
+            "asset_id": "AST-007",
+            "asset_name": "Control Panel CP-09",
+            "asset_type": "Electrical",
+            "latitude": 34.039742,
+            "longitude": -118.246428,
+            "temperature": 29.8,
+            "threshold": 40.0,
+            "risk_score": 15,
+            "risk_level": "Low",
+        },
+    ]
+
+    return pd.DataFrame(data)
