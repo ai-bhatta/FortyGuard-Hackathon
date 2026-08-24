@@ -1,0 +1,13 @@
+asset_id,asset_name,asset_type,latitude,longitude,heat_threshold_celsius,criticality,age_years,past_heat_incidents
+A001,San Jose EV Charging Hub,EV Charger,37.3382,-121.8863,37,5,6,3
+A002,Fresno Telecom Rooftop Node,Telecom,36.7378,-119.7871,39,4,4,1
+A003,Bakersfield Distribution Transformer,Transformer,35.3733,-119.0187,40,5,11,2
+A004,Palm Springs Solar Inverter Block,Solar,33.8303,-116.5453,43,4,8,0
+A005,Sacramento Pump Station,Pump,38.5816,-121.4944,38,5,13,4
+A006,Oakland Edge Router,Telecom,37.8044,-122.2712,36,3,5,1
+A007,San Diego Coastal Sensor,Sensor,32.7157,-117.1611,34,4,3,0
+A008,Stockton Substation Cabinet,Transformer,37.9577,-121.2908,39,4,9,2
+A009,Riverside Warehouse HVAC,HVAC,33.9806,-117.3755,37,3,7,1
+A010,Los Angeles Port Crane PLC,Industrial Control,33.7405,-118.2775,36,5,10,3
+A011,Modesto Battery Cabinet,Battery Storage,37.6391,-120.9969,36,5,2,0
+A012,San Francisco Outdoor Kiosk,Kiosk,37.7749,-122.4194,32,2,4,0
