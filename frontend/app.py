@@ -1,13 +1,22 @@
+import os
+import sys
 import textwrap
 import streamlit as st
 
-from components.asset_details import show_asset_details
-from components.copilot import show_copilot
-from components.kpis import show_kpis
-from components.map import show_map
-from components.risk_table import show_risk_table
-from data import load_asset_data
-from styles import load_styles
+# Add the root directory to sys.path so modules (frontend, services, risk) resolve cleanly
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
+if ROOT_DIR not in sys.path:
+    sys.path.append(ROOT_DIR)
+
+# Component and helper imports
+from frontend.components.asset_details import show_asset_details
+from frontend.components.copilot import show_copilot
+from frontend.components.kpis import show_kpis
+from frontend.components.map import show_map
+from frontend.components.risk_table import show_risk_table
+from frontend.data import load_asset_data
+from frontend.styles import load_styles
 
 # ==========================================================
 # PAGE CONFIGURATION
@@ -40,6 +49,7 @@ Industrial Climate Risk Intelligence
 </div>""",
     unsafe_allow_html=True,
 )
+
 # ==========================================================
 # LOAD DATA
 # ==========================================================
@@ -192,7 +202,7 @@ show_copilot(filtered_df)
 
 st.markdown(
     """<div class="app-footer">
-    AssetShield AI • Climate-aware industrial asset intelligence
+AssetShield AI • Climate-aware industrial asset intelligence
 </div>""",
     unsafe_allow_html=True,
 )
