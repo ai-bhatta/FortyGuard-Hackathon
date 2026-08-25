@@ -25,8 +25,8 @@ def load_styles():
             visibility: hidden;
         }
 
-        /* Sophisticated Serif Typography */
-        h1, h2, h3, .section-title, .brand, .asset-card-title {
+        /* Serif Typography */
+        h1, h2, h3, .section-title, .brand, .asset-card-title, .brand-subtitle {
             font-family: 'Playfair Display', Georgia, serif !important;
             letter-spacing: -0.01em;
         }
@@ -36,13 +36,14 @@ def load_styles():
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.2rem 2rem;
+            padding: 1.5rem 2rem;
             background: rgba(17, 24, 39, 0.85);
             backdrop-filter: blur(16px);
-            border-radius: 12px;
+            border-radius: 14px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            margin-bottom: 1.8rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
         }
 
         .brand {
@@ -52,11 +53,23 @@ def load_styles():
         }
 
         .brand-subtitle {
-            font-family: 'Playfair Display', serif !important;
             font-style: italic;
             color: #9ca3af;
             font-size: 1rem;
             margin-top: 2px;
+        }
+
+        /* Smooth Section Transitions */
+        .section-wrapper {
+            padding: 1rem 0;
+            margin: 1.5rem 0;
+            transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%);
+            margin: 2rem 0;
         }
 
         /* Card Elements */
@@ -103,14 +116,15 @@ def load_styles():
             background: rgba(17, 24, 39, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 14px;
-            padding: 1.5rem;
+            padding: 1.8rem;
             margin-bottom: 1rem;
             box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            transition: border-color 0.3s ease;
         }
 
         .asset-detail-title {
             font-family: 'Playfair Display', serif !important;
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: #ffffff;
             margin-bottom: 0.5rem;
@@ -126,10 +140,47 @@ def load_styles():
             font-size: 1.5rem;
             font-weight: 700;
             color: #f3f4f6;
-            margin-top: 1.5rem;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 0.5rem;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-subtitle {
+            font-size: 0.9rem;
+            color: #9ca3af;
+            margin-bottom: 1.2rem;
+        }
+
+        .safety-alert {
+            background: rgba(127, 29, 29, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .safety-title {
+            font-family: 'Playfair Display', serif !important;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fca5a5;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .safety-text {
+            color: #f3f4f6;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .app-footer {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.85rem;
+            padding: 2rem 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 3rem;
         }
         </style>
         """,

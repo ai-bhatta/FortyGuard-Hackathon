@@ -24,6 +24,7 @@ st.set_page_config(
 
 load_styles()
 
+# Header Banner
 st.markdown(
     """<div class="app-header">
 <div>
@@ -45,7 +46,7 @@ except Exception as error:
     st.exception(error)
     st.stop()
 
-# Sidebar
+# Sidebar Setup
 st.sidebar.title("AssetShield AI")
 st.sidebar.caption("Industrial Operations Center")
 st.sidebar.divider()
@@ -76,38 +77,50 @@ if search_text:
 st.sidebar.divider()
 st.sidebar.caption(f"Displaying {len(filtered_df)} of {len(df)} registered assets")
 
-# Main Dashboard
+# Section 1: Executive KPI Summary
 show_kpis(filtered_df)
-st.divider()
 
 if not filtered_df.empty:
     highest = filtered_df.sort_values("risk_score", ascending=False).iloc[0]
     st.markdown(
         f"""<div class="safety-alert">
-<div class="safety-title">Priority Maintenance Note</div>
+<div class="safety-title">Priority Maintenance Alert</div>
 <div class="safety-text">
-<strong>{highest['asset_name']}</strong> ({highest['asset_id']}) is currently exhibiting the highest thermal stress with a Heat Exposure Score of <strong>{highest['risk_score']}/100</strong>. Recorded temperature is <strong>{highest['temperature']:.1f}°C</strong> against a configured limit of <strong>{highest['threshold']:.1f}°C</strong>.
+<strong>{highest['asset_name']}</strong> ({highest['asset_id']}) is currently exhibiting the highest thermal exposure with a Heat Exposure Score of <strong>{highest['risk_score']}/100</strong>. Recorded FortyGuard temperature is <strong>{highest['temperature']:.1f}°C</strong> against a configured threshold of <strong>{highest['threshold']:.1f}°C</strong>.
 </div>
 </div>""",
         unsafe_allow_html=True,
     )
 
-st.divider()
+# Transition 1
+st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
-# Charts & Maps
+# Section 2: Distribution & Geospatial Analysis
 col1, col2 = st.columns([1, 1])
 with col1:
     show_risk_chart(filtered_df)
 with col2:
     show_map(filtered_df)
 
-st.divider()
+# Transition 2
+st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+
+# Section 3: Ranked Risk Table
 show_risk_table(filtered_df)
-st.divider()
+
+# Transition 3
+st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+
+# Section 4: Detailed Asset Technical Diagnostics
 show_asset_details(filtered_df)
-st.divider()
+
+# Transition 4
+st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+
+# Section 5: AssetShield AI Copilot
 show_copilot(filtered_df)
 
+# Footer
 st.markdown(
     """<div class="app-footer">
 AssetShield AI • Hyperlocal Temperature Intelligence via FortyGuard API
