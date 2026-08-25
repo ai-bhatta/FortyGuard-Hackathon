@@ -1,9 +1,8 @@
 import os
 import sys
-import textwrap
 import streamlit as st
 
-# Add the root directory to sys.path so modules (frontend, services, risk) resolve cleanly
+# Add the root directory to sys.path so modules resolve cleanly
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
 if ROOT_DIR not in sys.path:
@@ -14,6 +13,7 @@ from frontend.components.asset_details import show_asset_details
 from frontend.components.copilot import show_copilot
 from frontend.components.kpis import show_kpis
 from frontend.components.map import show_map
+from frontend.components.risk_chart import show_risk_chart
 from frontend.components.risk_table import show_risk_table
 from frontend.data import load_asset_data
 from frontend.styles import load_styles
@@ -101,7 +101,7 @@ search_text = st.sidebar.text_input(
 
 
 # ==========================================================
-# APPLY FILTERS
+# APPLY FILTERS (filtered_df IS CREATED HERE)
 # ==========================================================
 
 filtered_df = df.copy()
@@ -162,11 +162,20 @@ if not filtered_df.empty:
         unsafe_allow_html=True,
     )
 
+st.divider()
+
+
 # ==========================================================
-# MAP
+# RISK CHART & MAP (SIDE BY SIDE)
 # ==========================================================
 
-show_map(filtered_df)
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    show_risk_chart(filtered_df)
+
+with col2:
+    show_map(filtered_df)
 
 st.divider()
 
