@@ -2,7 +2,6 @@ import streamlit as st
 
 
 def load_styles():
-
     st.markdown(
         """
         <style>
@@ -52,22 +51,25 @@ def load_styles():
             padding: 1rem 1.2rem;
             min-height: 120px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            color: #111827 !important; /* Force inner box text dark */
         }
 
         .metric-label {
             font-size: 0.85rem;
-            color: #6b7280;
+            color: #374151 !important; /* Darkened from #6b7280 */
+            font-weight: 600;
         }
 
         .metric-value {
             font-size: 2rem;
             font-weight: 700;
             margin-top: 8px;
+            color: #111827 !important; /* Explicit dark black for values */
         }
 
         .metric-description {
             font-size: 0.78rem;
-            color: #8a8f98;
+            color: #4b5563 !important; /* Darkened from #8a8f98 */
             margin-top: 4px;
         }
 
@@ -113,16 +115,18 @@ def load_styles():
             padding: 1rem 1.2rem;
             border-radius: 8px;
             margin-bottom: 1rem;
+            color: #111827 !important;
         }
 
         .safety-title {
             font-weight: 700;
             font-size: 1.05rem;
+            color: #991b1b !important; /* Dark red title for high contrast */
         }
 
         .safety-text {
             margin-top: 5px;
-            color: #4b5563;
+            color: #1f2937 !important; /* Darkened from #4b5563 */
         }
 
         /* Section title */
