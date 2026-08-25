@@ -8,7 +8,7 @@ def show_risk_chart(df: pd.DataFrame):
         st.info("No asset data available to display risk distribution.")
         return
 
-    # Select only the columns needed for the chart to avoid PyArrow serialization issues
+    # Select only the columns needed for the chart to prevent PyArrow serialization errors
     chart_df = df[["risk_level"]].copy()
 
     # Define color scheme matching the frontend theme
@@ -25,7 +25,7 @@ def show_risk_chart(df: pd.DataFrame):
             x=alt.X(
                 "risk_level:N",
                 sort=["Critical", "High", "Moderate", "Low"],
-                title="Risk Level",
+                title="Risk Level Category",
                 axis=alt.Axis(labelColor="#cbd5e1", titleColor="#ffffff"),
             ),
             y=alt.Y(
@@ -46,5 +46,5 @@ def show_risk_chart(df: pd.DataFrame):
         .configure_view(strokeWidth=0)
     )
 
-    st.markdown('<div class="section-title">📊 Risk Level Distribution</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Risk Level Distribution</div>', unsafe_allow_html=True)
     st.altair_chart(chart, use_container_width=True)
