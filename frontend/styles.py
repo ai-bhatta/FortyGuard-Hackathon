@@ -21,7 +21,7 @@ def load_styles():
             padding-top: 1rem;
         }
 
-        /* Hide default Streamlit menu and footer, keep sidebar toggle button visible */
+        /* Hide Streamlit default menu & footer, keep sidebar toggle button visible */
         #MainMenu, footer {
             visibility: hidden;
         }
@@ -30,7 +30,6 @@ def load_styles():
             background: transparent !important;
         }
 
-        /* Style and position the sidebar expand arrow for mobile */
         button[data-testid="stSidebarCollapseButton"], 
         button[data-testid="stBaseButton-headerNoPadding"] {
             visibility: visible !important;
@@ -39,7 +38,41 @@ def load_styles():
             z-index: 999999 !important;
         }
 
-        /* Serif Typography */
+        /* Keyframe Entrance Animation */
+        @keyframes popUpFade {
+            0% {
+                opacity: 0;
+                transform: translateY(20px) scale(0.98);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Global Dynamic Pop-Up Trigger */
+        .app-header, 
+        .safety-alert, 
+        .metric-card, 
+        .asset-detail-card, 
+        div[data-testid="stDataFrame"], 
+        div[data-testid="stPlotlyChart"],
+        div[data-testid="stExpander"],
+        div[data-testid="stColumn"] > div {
+            animation: popUpFade 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            will-change: transform, opacity;
+        }
+
+        /* Staggered Delays for Sequential Pop-Up Effects */
+        div[data-testid="stColumn"]:nth-child(1) .metric-card { animation-delay: 0.05s; }
+        div[data-testid="stColumn"]:nth-child(2) .metric-card { animation-delay: 0.12s; }
+        div[data-testid="stColumn"]:nth-child(3) .metric-card { animation-delay: 0.19s; }
+        div[data-testid="stColumn"]:nth-child(4) .metric-card { animation-delay: 0.26s; }
+
+        .safety-alert { animation-delay: 0.3s; }
+        .section-divider { animation-delay: 0.35s; }
+
+        /* Typography */
         h1, h2, h3, .section-title, .brand, .asset-card-title, .brand-subtitle {
             font-family: 'Playfair Display', Georgia, serif !important;
             letter-spacing: -0.01em;
@@ -57,7 +90,6 @@ def load_styles():
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
             margin-bottom: 2rem;
-            transition: all 0.3s ease;
         }
 
         .brand {
@@ -73,20 +105,14 @@ def load_styles():
             margin-top: 2px;
         }
 
-        /* Smooth Section Transitions */
-        .section-wrapper {
-            padding: 1rem 0;
-            margin: 1.5rem 0;
-            transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
-        }
-
+        /* Divider & Transitions */
         .section-divider {
             height: 1px;
-            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%);
-            margin: 2rem 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0) 100%);
+            margin: 2.2rem 0;
         }
 
-        /* Card Elements */
+        /* Cards & Interactive Elements */
         .metric-card {
             background: #ffffff !important;
             border: 1px solid #e5e7eb !important;
@@ -94,13 +120,13 @@ def load_styles():
             padding: 1.25rem !important;
             min-height: 125px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
-            transition: all 0.3s ease !important;
+            transition: transform 0.3s ease, box-shadow 0.3s ease !important;
         }
 
         .metric-card:hover {
-            transform: translateY(-4px);
+            transform: translateY(-6px) scale(1.01) !important;
             border-color: #93c5fd !important;
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25) !important;
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3) !important;
         }
 
         .metric-label {
@@ -125,7 +151,6 @@ def load_styles():
             margin-top: 6px;
         }
 
-        /* Asset Detailed Card Frame */
         .asset-detail-card {
             background: rgba(17, 24, 39, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.12);
@@ -133,7 +158,12 @@ def load_styles():
             padding: 1.8rem;
             margin-bottom: 1rem;
             box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-            transition: border-color 0.3s ease;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .asset-detail-card:hover {
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
         }
 
         .asset-detail-title {
@@ -169,7 +199,8 @@ def load_styles():
             border: 1px solid rgba(239, 68, 68, 0.3);
             border-radius: 12px;
             padding: 1.2rem 1.5rem;
-            margin-bottom: 1.5rem;
+            margin-top: 1.8rem !important;  /* Added top margin to separate from KPI boxes */
+            margin-bottom: 2rem !important;
         }
 
         .safety-title {

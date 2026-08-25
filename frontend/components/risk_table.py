@@ -1,75 +1,68 @@
+import pandas as pd
 import streamlit as st
 
 
-def show_risk_table(df):
-
+def show_risk_table(df: pd.DataFrame):
+    st.markdown('<div class="section-title">Interactive Risk Ranking Engine</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="section-title">🏆 Asset Risk Ranking</div>',
+        '<div class="section-subtitle">Click headers to sort, select any row to highlight asset telemetry, or search dynamically.</div>',
         unsafe_allow_html=True,
     )
 
     if df.empty:
-
-        st.info(
-            "No assets match the current filters."
-        )
-
+        st.info("No asset records available for the selected filters.")
         return
 
-    ranked = df.sort_values(
+    # Keep only flat scalar columns so PyArrow can convert the DataFrame properly
+    columns_to_keep = [
+        "asset_id",
+        "asset_name",
+        "asset_type",
         "risk_score",
-        ascending=False,
-    ).copy()
+        "risk_level",
+        "temperature",
+        "threshold",
+        "hours_above_threshold",
+        "criticality",
+    ]
+    
+    valid_cols = [col for col in columns_to_keep if col in df.columns]
+    display_df = df[valid_cols].sort_values(by="risk_score", ascending=False).reset_index(drop=True)
 
-    ranked.insert(
-        0,
-        "Rank",
-        range(1, len(ranked) + 1),
-    )
-
-    display_df = ranked[
-        [
-            "Rank",
-            "asset_id",
-            "asset_name",
-            "asset_type",
-            "temperature",
-            "threshold",
-            "risk_score",
-            "risk_level",
-        ]
-    ].copy()
-
-    display_df["temperature"] = (
-        display_df["temperature"].round(1)
-    )
-
-    display_df["threshold"] = (
-        display_df["threshold"].round(1)
-    )
-
-    display_df = display_df.rename(
-        columns={
-            "asset_id": "Asset ID",
-            "asset_name": "Asset",
-            "asset_type": "Type",
-            "temperature": "Temp °C",
-            "threshold": "Threshold °C",
-            "risk_score": "Score",
-            "risk_level": "Status",
-        }
-    )
-
-    st.dataframe(
+    event = st.dataframe(
         display_df,
-        use_container_width=True,
-        hide_index=True,
         column_config={
-            "Score": st.column_config.ProgressColumn(
-                "Risk Score",
+            "asset_id": st.column_config.TextColumn("Asset ID", help="Unique Equipment Identification"),
+            "asset_name": st.column_config.TextColumn("Asset Name"),
+            "asset_type": st.column_config.TextColumn("Type"),
+            "temperature": st.column_config.NumberColumn(
+                "Temp (°C)",
+                format="%.1f °C",
+                help="FortyGuard Hyperlocal Thermal Reading",
+            ),
+            "threshold": st.column_config.NumberColumn("Threshold (°C)", format="%.1f °C"),
+            "hours_above_threshold": st.column_config.NumberColumn("Over Limit (hrs)"),
+            "risk_score": st.column_config.ProgressColumn(
+                "Heat Exposure Score",
+                help="0 = Low Risk, 100 = Severe Thermal Risk",
+                format="%d/100",
                 min_value=0,
                 max_value=100,
-                format="%d",
             ),
+            "risk_level": st.column_config.SelectboxColumn(
+                "Risk Rating",
+                options=["Critical", "High", "Moderate", "Low"],
+            ),
+            "criticality": st.column_config.TextColumn("Criticality Level"),
         },
+        hide_index=True,
+        use_container_width=True,
+        on_select="rerun",
+        selection_mode="single-row",
     )
+
+    selected_rows = event.selection.get("rows", [])
+    if selected_rows:
+        selected_index = selected_rows[0]
+        selected_asset_name = display_df.iloc[selected_index]["asset_name"]
+        st.success(f"Selected Asset: **{selected_asset_name}**")
