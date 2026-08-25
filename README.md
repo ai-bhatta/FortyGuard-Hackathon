@@ -1,30 +1,60 @@
-# AssetShield AI Backend
+# AssetShield AI
 
-AssetShield AI turns FortyGuard temperature intelligence into an explainable maintenance-priority score for outdoor assets. This backend focuses on the hackathon MVP requirements from the team document: demo assets, FortyGuard integration boundary, 0-100 heat exposure scoring, risk labels, recommendations, and frontend-ready structured output.
+AssetShield AI is a hackathon MVP that turns FortyGuard climate intelligence into operational heat-risk priorities for California outdoor industrial assets. It loads demo assets, fetches or reuses clearly labelled climate data, calculates an explainable 0-100 heat exposure score, and exposes the result through both a FastAPI backend and a Streamlit dashboard.
 
-## What Is Done
+This is a transparent inspection-priority model. It does not predict exact equipment failure.
 
-- Demo asset dataset with 12 labelled California industrial assets in `data/assets.csv`.
-- Reusable FortyGuard service in `services/fortyguard.py`.
-- API key loading from environment variables, with no committed secret.
-- Cached demo response support in `data/fortyguard_cache.json` for reliable demos.
-- Validation for asset coordinates, required cached fields, missing API fields, HTTP/API errors, and timeouts.
-- Explainable 0-100 heat exposure scoring in `risk/scoring.py`.
-- Risk classifications: Low, Moderate, High, Critical.
-- Recommendation logic: Monitor, Review during next maintenance window, Schedule Inspection, Prioritize Inspection.
-- Frontend/AI-ready payload builder in `assetshield_backend.py`.
-- FastAPI HTTP endpoints in `api_server.py` for frontend integration.
-- Tests for scoring boundaries, critical/high cases, demo asset loading, and ranked output.
+## Current Status
 
-This is a transparent prioritization model for heat exposure and inspection attention. It does not predict exact equipment failure.
+Done:
 
-## Setup With uv
+- California demo asset dataset with 12 assets in `data/assets.csv`.
+- Cached California climate demo data in `data/fortyguard_cache.json`.
+- FortyGuard API client wrapper in `fortyguard/`.
+- Reusable service layer in `services/fortyguard.py`.
+- Asset loading and validation in `services/assets.py`.
+- Explainable scoring engine in `risk/scoring.py`.
+- Risk levels: Low, Moderate, High, Critical.
+- Maintenance recommendations: Monitor, Review during next maintenance window, Schedule Inspection, Prioritize Inspection.
+- Backend report builder in `assetshield_backend.py`.
+- FastAPI endpoints in `api_server.py`.
+- Streamlit dashboard in `frontend/app.py`.
+- Automated tests for scoring, backend payloads, and API endpoints.
+- `uv` project setup with `pyproject.toml` and `uv.lock`.
+
+Still optional / future work:
+
+- Verify live FortyGuard calls with a real API key.
+- Replace cached demo data with cached responses captured from real successful FortyGuard California requests.
+- Connect the copilot to a real LLM if the team wants richer natural-language answers.
+
+## Project Structure
+
+```text
+.
+|-- api_server.py              # FastAPI HTTP API for frontend integration
+|-- assetshield_backend.py     # CLI/report builder
+|-- data/
+|   |-- assets.csv             # California demo asset inventory
+|   `-- fortyguard_cache.json  # cached demo climate data
+|-- fortyguard/                # FortyGuard API client
+|-- frontend/                  # Streamlit dashboard
+|-- risk/                      # scoring and classification logic
+|-- services/                  # asset loading and FortyGuard service layer
+|-- tests/                     # pytest suite
+|-- pyproject.toml             # uv project dependencies
+`-- uv.lock                    # locked dependency versions
+```
+
+## Setup
+
+Install dependencies with `uv`:
 
 ```bash
 uv sync
 ```
 
-Create a local `.env` file from the example:
+Create a local `.env` file:
 
 ```bash
 cp .env.example .env
@@ -36,68 +66,99 @@ On Windows PowerShell:
 Copy-Item .env.example .env
 ```
 
-## Where To Add Your API Key
-
-Add your real FortyGuard key to `.env`:
+Add your FortyGuard key in `.env`:
 
 ```env
 FORTYGUARD_API_KEY=your_real_key_here
 FORTYGUARD_BASE_URL=https://api.fortyguard.com
-ASSETSHIELD_USE_LIVE_API=true
+ASSETSHIELD_USE_LIVE_API=false
 ASSETSHIELD_CACHE_PATH=data/fortyguard_cache.json
 ```
 
-Keep `ASSETSHIELD_USE_LIVE_API=false` if you want to use cached demo data without calling the API.
+Keep `ASSETSHIELD_USE_LIVE_API=false` for stable cached demo mode. Set it to `true` when testing live FortyGuard data.
 
-## Run The Backend Demo
+## Local Testing Guide
 
-```bash
-uv run python assetshield_backend.py
-```
-
-The script prints assets ranked by score, highest risk first.
-
-## Run The HTTP API
-
-```bash
-uv run uvicorn api_server:app --reload
-```
-
-Default local URL:
-
-```text
-http://127.0.0.1:8000
-```
-
-Frontend handoff endpoints:
-
-- `GET /health`: backend health check.
-- `GET /assets`: raw California demo asset inventory.
-- `GET /risks`: ranked scored assets, highest risk first.
-- `GET /risks?risk_level=High`: filter by risk level.
-- `GET /risks?asset_type=Telecom`: filter by asset type.
-- `GET /risks/{asset_id}`: one asset detail with score breakdown.
-- `GET /docs`: interactive FastAPI docs.
-
-By default, endpoints use cached demo data. To call FortyGuard live, pass `live=true`, for example `GET /risks?live=true`, and set `ASSETSHIELD_USE_LIVE_API=true` plus `FORTYGUARD_API_KEY` in `.env`.
-
-## Run Tests
+### 1. Run Automated Tests
 
 ```bash
 uv run pytest
 ```
 
-## Backend Modules
+Expected result:
 
-- `services/assets.py`: loads and validates the demo asset inventory.
-- `services/fortyguard.py`: single integration point for live FortyGuard data or cached demo data.
-- `risk/scoring.py`: calculates the 0-100 score and factor-by-factor explanation.
-- `assetshield_backend.py`: builds the structured ranked report for Streamlit, React, or the AI Copilot.
-- `api_server.py`: exposes the backend over HTTP for the frontend.
+```text
+11 passed
+```
 
-## Remaining Work
+### 2. Test The Backend CLI
 
-- Connect these endpoints to the frontend dashboard UI.
-- Connect the same structured facts to the AssetShield Copilot.
-- Capture a few real successful FortyGuard responses and store them as clearly labelled cached demo data for final presentation reliability.
-- Expand tests once the frontend and copilot integration are added.
+```bash
+uv run python assetshield_backend.py
+```
+
+Expected behavior: the command prints California assets ranked by risk score, highest first.
+
+### 3. Start The FastAPI Backend
+
+```bash
+uv run uvicorn api_server:app --reload
+```
+
+Open the API docs:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Useful endpoints:
+
+- `GET /health`
+- `GET /assets`
+- `GET /risks`
+- `GET /risks?risk_level=High`
+- `GET /risks?asset_type=Telecom`
+- `GET /risks/{asset_id}`
+
+Example:
+
+```text
+http://127.0.0.1:8000/risks/A001
+```
+
+To test live FortyGuard mode, set your API key in `.env`, set `ASSETSHIELD_USE_LIVE_API=true`, then call:
+
+```text
+http://127.0.0.1:8000/risks?live=true
+```
+
+### 4. Run The Streamlit Dashboard
+
+In a second terminal:
+
+```bash
+uv run streamlit run frontend/app.py
+```
+
+Expected behavior: Streamlit opens a local dashboard with KPI cards, filters, an asset map, a ranked risk table, asset details, and a lightweight AssetShield Copilot.
+
+### 5. Frontend Handoff Notes
+
+The frontend can either:
+
+- Import local Python data through `frontend/data.py`.
+- Call the FastAPI endpoints from `api_server.py`.
+
+For a cleaner team split, use the HTTP API as the contract:
+
+- Dashboard cards: derive counts from `GET /risks`.
+- Map markers: use `latitude`, `longitude`, `risk_level`, and `risk_score` from `GET /risks`.
+- Asset detail panel: use `GET /risks/{asset_id}`.
+- Filters: call `GET /risks?risk_level=...` and `GET /risks?asset_type=...`.
+
+## Notes
+
+- Do not commit `.env`.
+- `.venv/`, `__pycache__/`, and `.pytest_cache/` are ignored.
+- Cached data must be labelled as cached demo data during demos.
+- The score is for heat exposure prioritization, not failure prediction.
