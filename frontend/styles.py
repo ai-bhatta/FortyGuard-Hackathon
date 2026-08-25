@@ -21,8 +21,22 @@ def load_styles():
             padding-top: 1rem;
         }
 
-        #MainMenu, footer, header {
+        /* Hide default Streamlit menu and footer, keep sidebar toggle button visible */
+        #MainMenu, footer {
             visibility: hidden;
+        }
+
+        header[data-testid="stHeader"] {
+            background: transparent !important;
+        }
+
+        /* Style and position the sidebar expand arrow for mobile */
+        button[data-testid="stSidebarCollapseButton"], 
+        button[data-testid="stBaseButton-headerNoPadding"] {
+            visibility: visible !important;
+            display: block !important;
+            color: #ffffff !important;
+            z-index: 999999 !important;
         }
 
         /* Serif Typography */
