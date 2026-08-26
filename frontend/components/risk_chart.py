@@ -8,16 +8,13 @@ def show_risk_chart(df: pd.DataFrame):
         st.info("No asset data available to display risk distribution.")
         return
 
-    # Select only the columns needed for the chart to prevent PyArrow serialization errors
     chart_df = df[["risk_level"]].copy()
 
-    # Define color scheme matching the frontend theme
     color_scale = alt.Scale(
         domain=["Critical", "High", "Moderate", "Low"],
         range=["#ef4444", "#f97316", "#eab308", "#22c55e"],
     )
 
-    # Build Altair Bar Chart
     chart = (
         alt.Chart(chart_df)
         .mark_bar(cornerRadiusTopLeft=8, cornerRadiusTopRight=8)

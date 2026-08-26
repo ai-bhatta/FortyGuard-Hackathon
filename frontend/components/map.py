@@ -10,7 +10,6 @@ def show_map(df: pd.DataFrame):
         st.warning("No location data available.")
         return
 
-    # Map risk levels to RGB colors for Pydeck
     def get_color(level):
         colors = {
             "Critical": [239, 68, 68, 200],
@@ -23,7 +22,6 @@ def show_map(df: pd.DataFrame):
     map_df = df.copy()
     map_df["color"] = map_df["risk_level"].apply(get_color)
 
-    # Initial view centered on data average
     view_state = pdk.ViewState(
         latitude=map_df["latitude"].mean(),
         longitude=map_df["longitude"].mean(),
@@ -55,10 +53,8 @@ def show_map(df: pd.DataFrame):
         },
     )
 
-    # Render interactive map with selection listener
     event = st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object")
 
-    # If user clicks an asset on the map, display selected product info box
     if event and event.selection and event.selection.get("objects"):
         selected_data = event.selection["objects"].get("ScatterplotLayer")
         if selected_data:
@@ -83,4 +79,4 @@ def show_map(df: pd.DataFrame):
                 )
             with jump_col2:
                 st.write("")
-                st.caption("See full diagnostics in the section below ⬇️")
+                st.caption("Go to Asset Diagnostics in the nav to see full details.")

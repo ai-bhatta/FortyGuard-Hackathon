@@ -29,7 +29,6 @@ def show_asset_details(df: pd.DataFrame):
     if default_id not in asset_list:
         default_id = asset_list[0]
 
-    # Quick jump buttons for the top 3 riskiest assets in the current filtered view
     top3 = df.sort_values("risk_score", ascending=False).head(3)
     st.markdown("**Quick jump — highest risk assets:**")
     jump_cols = st.columns(len(top3)) if len(top3) > 0 else []
@@ -49,20 +48,16 @@ def show_asset_details(df: pd.DataFrame):
 
     asset = df[df["asset_id"] == selected_id].iloc[0]
 
-    # Calculate thermal margin
     thermal_margin = asset["threshold"] - asset["temperature"]
     margin_color = "#ef4444" if thermal_margin < 0 else ("#f97316" if thermal_margin < 3 else "#10b981")
 
-    # Safe conversion for integer criticality ratings
     criticality_str = str(asset.get("criticality", "N/A"))
 
-    # Asset functional description lookup
     asset_type = asset.get("asset_type", "Equipment")
     functional_desc = ASSET_DESCRIPTIONS.get(
         asset_type, "Outdoor critical industrial infrastructure asset monitored for thermal exposure."
     )
 
-    # Render Detailed Technical Profile
     st.markdown(
         f"""
         <div class="asset-detail-card">
@@ -100,7 +95,6 @@ def show_asset_details(df: pd.DataFrame):
         unsafe_allow_html=True,
     )
 
-    # Detailed Engineering Breakdown
     col1, col2 = st.columns(2)
 
     with col1:

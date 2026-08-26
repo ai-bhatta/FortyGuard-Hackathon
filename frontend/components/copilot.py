@@ -47,7 +47,6 @@ def build_fallback_response(user_query: str, df: pd.DataFrame) -> str:
         return "\n".join(output)
 
     elif "why" in query_lower:
-        # Try to match a specific asset name mentioned in the question
         matched = None
         for _, row in df.iterrows():
             if str(row.get("asset_name", "")).lower() in query_lower:
@@ -145,7 +144,6 @@ def show_copilot(df: pd.DataFrame):
         st.session_state.messages = st.session_state.messages[:1]
         st.rerun()
 
-    # Picked up from the "Ask Copilot about this asset" button in asset_details.py
     pending_question = st.session_state.pop("pending_copilot_question", None)
 
     user_input = st.chat_input("Ask a diagnostic question about your assets...")

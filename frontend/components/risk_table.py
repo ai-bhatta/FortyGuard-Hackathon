@@ -13,7 +13,6 @@ def show_risk_table(df: pd.DataFrame):
         st.info("No asset records available for the selected filters.")
         return
 
-    # Keep only flat scalar columns so PyArrow can convert the DataFrame properly
     columns_to_keep = [
         "asset_id",
         "asset_name",
@@ -66,4 +65,4 @@ def show_risk_table(df: pd.DataFrame):
         selected_index = selected_rows[0]
         selected_asset = display_df.iloc[selected_index]
         st.session_state["selected_asset_id"] = selected_asset["asset_id"]
-        st.success(f"Selected Asset: **{selected_asset['asset_name']}** — jump to diagnostics below ⬇️")
+        st.success(f"Selected Asset: **{selected_asset['asset_name']}** — go to Asset Diagnostics in the nav to see full details.")
