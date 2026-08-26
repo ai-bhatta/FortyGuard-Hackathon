@@ -17,11 +17,10 @@ def build_fallback_response(user_query: str, df: pd.DataFrame) -> str:
     query_lower = user_query.lower()
     critical_df = df[df['risk_level'].str.upper() == 'CRITICAL'] if 'risk_level' in df.columns else pd.DataFrame()
 
-    # Query 1: Critical Assets Breakdown
     if "critical" in query_lower or "breakdown" in query_lower:
         if critical_df.empty:
             return "✅ **No Critical Risk Detected**: All currently monitored assets are operating within acceptable thermal parameters."
-        
+
         output = ["### 🔥 Critical Thermal Risk Analysis\n"]
         for _, row in critical_df.iterrows():
             margin = row.get('temperature', 0) - row.get('threshold', 0)
@@ -33,11 +32,10 @@ def build_fallback_response(user_query: str, df: pd.DataFrame) -> str:
             )
         return "\n".join(output)
 
-    # Query 2: Recommended Maintenance Plan
     elif "maintenance" in query_lower or "action plan" in query_lower or "plan" in query_lower:
         top_assets = df.sort_values("risk_score", ascending=False).head(3)
         output = ["### 🛠️ Prioritized Preventive Maintenance Protocol\n"]
-        
+
         idx = 1
         for _, row in top_assets.iterrows():
             output.append(
@@ -48,7 +46,25 @@ def build_fallback_response(user_query: str, df: pd.DataFrame) -> str:
             idx += 1
         return "\n".join(output)
 
-    # Generic Fallback / Heat Impact Query
+    elif "why" in query_lower:
+        # Try to match a specific asset name mentioned in the question
+        matched = None
+        for _, row in df.iterrows():
+            if str(row.get("asset_name", "")).lower() in query_lower:
+                matched = row
+                break
+        target = matched if matched is not None else df.sort_values("risk_score", ascending=False).iloc[0]
+        margin = target.get('temperature', 0) - target.get('threshold', 0)
+        return (
+            f"### 🔎 Risk Explanation: {target.get('asset_name')}\n"
+            f"* **Recorded Temperature:** `{target.get('temperature', 0):.1f}°C` vs threshold `{target.get('threshold', 0):.1f}°C` "
+            f"(**{margin:+.1f}°C margin**)\n"
+            f"* **Criticality:** `{target.get('criticality', 'N/A')}`\n"
+            f"* **Hours Above Limit:** `{target.get('hours_above_threshold', 0)}`\n"
+            f"* **Heat Exposure Score:** `{target.get('risk_score', 0)}/100` → **{target.get('risk_level', 'N/A')}**\n\n"
+            f"This asset's score reflects thermal severity above threshold, exposure duration, and its business criticality rating — not a failure prediction."
+        )
+
     else:
         top_asset = df.sort_values("risk_score", ascending=False).iloc[0]
         return (
@@ -69,13 +85,12 @@ def query_openai(messages: list, df: pd.DataFrame) -> str:
         except Exception:
             api_key = None
 
-    # If no key or library, immediately use local analysis engine
     if not api_key or not HAS_OPENAI:
         return build_fallback_response(messages[-1]["content"], df)
 
     try:
         client = OpenAI(api_key=api_key)
-        
+
         context_str = df.to_json(orient="records")
         system_prompt = (
             "You are AssetShield AI, an industrial thermal engineer powered by FortyGuard heat data. "
@@ -90,7 +105,6 @@ def query_openai(messages: list, df: pd.DataFrame) -> str:
         )
         return response.choices[0].message.content
     except Exception:
-        # Gracefully handle Quota Error 429 by falling back to deterministic local responses
         return build_fallback_response(messages[-1]["content"], df)
 
 
@@ -118,8 +132,8 @@ def show_copilot(df: pd.DataFrame):
             st.markdown(msg["content"])
 
     st.markdown("**Suggested Quick Queries:**")
-    q_col1, q_col2, q_col3 = st.columns(3)
-    
+    q_col1, q_col2, q_col3, q_col4 = st.columns(4)
+
     selected_query = None
     if q_col1.button("🔥 Critical Assets Risk Breakdown"):
         selected_query = "Which assets are currently in critical condition, what are their FortyGuard temperatures versus thresholds, and why?"
@@ -127,9 +141,15 @@ def show_copilot(df: pd.DataFrame):
         selected_query = "Provide a prioritized step-by-step preventive maintenance action plan for the top 3 highest risk assets."
     if q_col3.button("⚡ High Ambient Heat Impact"):
         selected_query = "Summarize how current ambient heat levels are affecting equipment longevity and operational efficiency across all monitored assets."
+    if q_col4.button("🗑️ Clear Chat"):
+        st.session_state.messages = st.session_state.messages[:1]
+        st.rerun()
+
+    # Picked up from the "Ask Copilot about this asset" button in asset_details.py
+    pending_question = st.session_state.pop("pending_copilot_question", None)
 
     user_input = st.chat_input("Ask a diagnostic question about your assets...")
-    prompt = user_input or selected_query
+    prompt = user_input or selected_query or pending_question
 
     if prompt:
         st.session_state.messages.append({"role": "user", "content": prompt})

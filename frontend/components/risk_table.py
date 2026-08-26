@@ -25,7 +25,7 @@ def show_risk_table(df: pd.DataFrame):
         "hours_above_threshold",
         "criticality",
     ]
-    
+
     valid_cols = [col for col in columns_to_keep if col in df.columns]
     display_df = df[valid_cols].sort_values(by="risk_score", ascending=False).reset_index(drop=True)
 
@@ -64,5 +64,6 @@ def show_risk_table(df: pd.DataFrame):
     selected_rows = event.selection.get("rows", [])
     if selected_rows:
         selected_index = selected_rows[0]
-        selected_asset_name = display_df.iloc[selected_index]["asset_name"]
-        st.success(f"Selected Asset: **{selected_asset_name}**")
+        selected_asset = display_df.iloc[selected_index]
+        st.session_state["selected_asset_id"] = selected_asset["asset_id"]
+        st.success(f"Selected Asset: **{selected_asset['asset_name']}** — jump to diagnostics below ⬇️")

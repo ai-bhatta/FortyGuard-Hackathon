@@ -63,17 +63,24 @@ def show_map(df: pd.DataFrame):
         selected_data = event.selection["objects"].get("ScatterplotLayer")
         if selected_data:
             item = selected_data[0]
-            st.markdown(
-                f"""
-                <div class="safety-alert" style="border-left-color: #38bdf8; background: #0f172a; border: 1px solid #38bdf8;">
-                    <div class="safety-title" style="color: #38bdf8;">📍 Selected Asset: {item['asset_name']} ({item['asset_id']})</div>
-                    <div class="safety-text" style="color: #cbd5e1;">
-                        <b>Product Type:</b> {item['asset_type']}<br/>
-                        <b>Current Risk:</b> {item['risk_score']}/100 ({item['risk_level']})<br/>
-                        <b>Operational Temp:</b> {item['temperature']}°C / Threshold: {item['threshold']}°C<br/>
-                        <b>Recommendation:</b> {item.get('recommendation', 'Inspect thermal insulation')}
+            st.session_state["selected_asset_id"] = item["asset_id"]
+
+            jump_col1, jump_col2 = st.columns([5, 1])
+            with jump_col1:
+                st.markdown(
+                    f"""
+                    <div class="safety-alert" style="border-left-color: #38bdf8; background: #0f172a; border: 1px solid #38bdf8;">
+                        <div class="safety-title" style="color: #38bdf8;">📍 Selected Asset: {item['asset_name']} ({item['asset_id']})</div>
+                        <div class="safety-text" style="color: #cbd5e1;">
+                            <b>Product Type:</b> {item['asset_type']}<br/>
+                            <b>Current Risk:</b> {item['risk_score']}/100 ({item['risk_level']})<br/>
+                            <b>Operational Temp:</b> {item['temperature']}°C / Threshold: {item['threshold']}°C<br/>
+                            <b>Recommendation:</b> {item.get('recommendation', 'Inspect thermal insulation')}
+                        </div>
                     </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with jump_col2:
+                st.write("")
+                st.caption("See full diagnostics in the section below ⬇️")

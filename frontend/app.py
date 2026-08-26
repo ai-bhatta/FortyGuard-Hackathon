@@ -39,12 +39,24 @@ Powered by FortyGuard Hyperlocal Temperature Intelligence
     unsafe_allow_html=True,
 )
 
+top_col1, top_col2 = st.columns([5, 1])
+with top_col2:
+    if st.button("🔄 Refresh FortyGuard Data", use_container_width=True):
+        st.cache_data.clear()
+        st.rerun()
+
 try:
     df = load_asset_data()
 except Exception as error:
     st.error("Unable to load asset telemetry data.")
     st.exception(error)
     st.stop()
+
+# Shared session state defaults
+if "risk_filter" not in st.session_state:
+    st.session_state["risk_filter"] = "All"
+if "selected_asset_id" not in st.session_state:
+    st.session_state["selected_asset_id"] = None
 
 # Sidebar Setup
 st.sidebar.title("AssetShield AI")
@@ -53,7 +65,16 @@ st.sidebar.divider()
 st.sidebar.subheader("Filters")
 
 risk_options = ["All", "Critical", "High", "Moderate", "Low"]
-selected_risk = st.sidebar.selectbox("Risk Level Category", risk_options)
+sidebar_choice = st.sidebar.selectbox(
+    "Risk Level Category",
+    risk_options,
+    index=risk_options.index(st.session_state["risk_filter"]),
+)
+if sidebar_choice != st.session_state["risk_filter"]:
+    st.session_state["risk_filter"] = sidebar_choice
+    st.rerun()
+
+selected_risk = st.session_state["risk_filter"]
 
 asset_types = sorted(df["asset_type"].dropna().unique().tolist())
 selected_type = st.sidebar.selectbox("Asset Type", ["All"] + asset_types)
@@ -77,20 +98,32 @@ if search_text:
 st.sidebar.divider()
 st.sidebar.caption(f"Displaying {len(filtered_df)} of {len(df)} registered assets")
 
-# Section 1: Executive KPI Summary
-show_kpis(filtered_df)
+if st.sidebar.button("Clear Selected Asset", use_container_width=True):
+    st.session_state["selected_asset_id"] = None
+    st.rerun()
+
+# Section 1: Executive KPI Summary (always reflects full fleet, not the current filter)
+show_kpis(df)
 
 if not filtered_df.empty:
     highest = filtered_df.sort_values("risk_score", ascending=False).iloc[0]
-    st.markdown(
-        f"""<div class="safety-alert">
+
+    alert_col1, alert_col2 = st.columns([5, 1])
+    with alert_col1:
+        st.markdown(
+            f"""<div class="safety-alert">
 <div class="safety-title">Priority Maintenance Alert</div>
 <div class="safety-text">
 <strong>{highest['asset_name']}</strong> ({highest['asset_id']}) is currently exhibiting the highest thermal exposure with a Heat Exposure Score of <strong>{highest['risk_score']}/100</strong>. Recorded FortyGuard temperature is <strong>{highest['temperature']:.1f}°C</strong> against a configured threshold of <strong>{highest['threshold']:.1f}°C</strong>.
 </div>
 </div>""",
-        unsafe_allow_html=True,
-    )
+            unsafe_allow_html=True,
+        )
+    with alert_col2:
+        st.write("")
+        if st.button("Inspect Now →", key="jump_top_asset", use_container_width=True):
+            st.session_state["selected_asset_id"] = highest["asset_id"]
+            st.rerun()
 
 # Transition 1
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)

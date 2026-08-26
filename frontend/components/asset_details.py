@@ -22,10 +22,32 @@ def show_asset_details(df: pd.DataFrame):
         st.info("No assets selected.")
         return
 
-    asset_list = df["asset_name"].tolist()
-    selected_name = st.selectbox("Select Asset for Deep Technical Diagnostics", asset_list)
+    asset_list = df["asset_id"].tolist()
+    name_lookup = dict(zip(df["asset_id"], df["asset_name"]))
 
-    asset = df[df["asset_name"] == selected_name].iloc[0]
+    default_id = st.session_state.get("selected_asset_id")
+    if default_id not in asset_list:
+        default_id = asset_list[0]
+
+    # Quick jump buttons for the top 3 riskiest assets in the current filtered view
+    top3 = df.sort_values("risk_score", ascending=False).head(3)
+    st.markdown("**Quick jump — highest risk assets:**")
+    jump_cols = st.columns(len(top3)) if len(top3) > 0 else []
+    for jcol, (_, row) in zip(jump_cols, top3.iterrows()):
+        label = f"⚠️ {row['asset_name']} ({row['risk_score']})"
+        if jcol.button(label, key=f"jump_{row['asset_id']}", use_container_width=True):
+            st.session_state["selected_asset_id"] = row["asset_id"]
+            st.rerun()
+
+    selected_id = st.selectbox(
+        "Select Asset for Deep Technical Diagnostics",
+        asset_list,
+        index=asset_list.index(default_id),
+        format_func=lambda aid: f"{name_lookup[aid]} ({aid})",
+    )
+    st.session_state["selected_asset_id"] = selected_id
+
+    asset = df[df["asset_id"] == selected_id].iloc[0]
 
     # Calculate thermal margin
     thermal_margin = asset["threshold"] - asset["temperature"]
@@ -110,3 +132,12 @@ def show_asset_details(df: pd.DataFrame):
             """,
             unsafe_allow_html=True,
         )
+
+    ask_col1, ask_col2 = st.columns([1, 3])
+    with ask_col1:
+        if st.button("💬 Ask Copilot about this asset", use_container_width=True):
+            st.session_state["pending_copilot_question"] = (
+                f"Why is {asset['asset_name']} ({asset['asset_id']}) rated "
+                f"{asset['risk_level']} risk, and what maintenance action do you recommend?"
+            )
+            st.rerun()
