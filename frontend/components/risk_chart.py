@@ -10,9 +10,10 @@ def show_risk_chart(df: pd.DataFrame):
 
     chart_df = df[["risk_level"]].copy()
 
+    # Single hue (thermal red), shaded by severity — darkest/most saturated = most critical
     color_scale = alt.Scale(
         domain=["Critical", "High", "Moderate", "Low"],
-        range=["#ef4444", "#f97316", "#eab308", "#22c55e"],
+        range=["#7f1d1d", "#dc2626", "#f87171", "#fecaca"],
     )
 
     chart = (

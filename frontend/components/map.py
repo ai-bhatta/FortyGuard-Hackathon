@@ -2,6 +2,14 @@ import pandas as pd
 import pydeck as pdk
 import streamlit as st
 
+# Same thermal-red family used in risk_chart.py, converted to RGBA
+RISK_COLORS = {
+    "Critical": [127, 29, 29, 220],   # #7f1d1d
+    "High": [220, 38, 38, 210],       # #dc2626
+    "Moderate": [248, 113, 113, 200], # #f87171
+    "Low": [254, 202, 202, 190],      # #fecaca
+}
+
 
 def show_map(df: pd.DataFrame):
     st.markdown('<div class="section-title">🗺️ Interactive Asset Map</div>', unsafe_allow_html=True)
@@ -11,13 +19,7 @@ def show_map(df: pd.DataFrame):
         return
 
     def get_color(level):
-        colors = {
-            "Critical": [239, 68, 68, 200],
-            "High": [249, 115, 22, 200],
-            "Moderate": [234, 179, 8, 200],
-            "Low": [34, 197, 94, 200],
-        }
-        return colors.get(level, [59, 130, 246, 200])
+        return RISK_COLORS.get(level, [148, 163, 184, 200])
 
     map_df = df.copy()
     map_df["color"] = map_df["risk_level"].apply(get_color)
@@ -55,28 +57,36 @@ def show_map(df: pd.DataFrame):
 
     event = st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object")
 
+    # Only update the stored selection when a NEW click actually happened.
+    # This is what prevents the card from vanishing on unrelated reruns.
     if event and event.selection and event.selection.get("objects"):
         selected_data = event.selection["objects"].get("ScatterplotLayer")
         if selected_data:
-            item = selected_data[0]
-            st.session_state["selected_asset_id"] = item["asset_id"]
+            st.session_state["selected_map_asset"] = selected_data[0]
+            st.session_state["selected_asset_id"] = selected_data[0]["asset_id"]
 
-            jump_col1, jump_col2 = st.columns([5, 1])
-            with jump_col1:
-                st.markdown(
-                    f"""
-                    <div class="safety-alert" style="border-left-color: #38bdf8; background: #0f172a; border: 1px solid #38bdf8;">
-                        <div class="safety-title" style="color: #38bdf8;">📍 Selected Asset: {item['asset_name']} ({item['asset_id']})</div>
-                        <div class="safety-text" style="color: #cbd5e1;">
-                            <b>Product Type:</b> {item['asset_type']}<br/>
-                            <b>Current Risk:</b> {item['risk_score']}/100 ({item['risk_level']})<br/>
-                            <b>Operational Temp:</b> {item['temperature']}°C / Threshold: {item['threshold']}°C<br/>
-                            <b>Recommendation:</b> {item.get('recommendation', 'Inspect thermal insulation')}
-                        </div>
+    # Always render from session_state, not from the live event — so it persists
+    # across reruns triggered by filters, nav clicks, etc.
+    item = st.session_state.get("selected_map_asset")
+    if item:
+        jump_col1, jump_col2 = st.columns([5, 1])
+        with jump_col1:
+            st.markdown(
+                f"""
+                <div class="safety-alert" style="border-left-color: #f87171; background: #0f172a; border: 1px solid #f87171;">
+                    <div class="safety-title" style="color: #f87171;">📍 Selected Asset: {item['asset_name']} ({item['asset_id']})</div>
+                    <div class="safety-text" style="color: #cbd5e1;">
+                        <b>Product Type:</b> {item['asset_type']}<br/>
+                        <b>Current Risk:</b> {item['risk_score']}/100 ({item['risk_level']})<br/>
+                        <b>Operational Temp:</b> {item['temperature']}°C / Threshold: {item['threshold']}°C<br/>
+                        <b>Recommendation:</b> {item.get('recommendation', 'Inspect thermal insulation')}
                     </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            with jump_col2:
-                st.write("")
-                st.caption("Go to Asset Diagnostics in the nav to see full details.")
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        with jump_col2:
+            st.write("")
+            if st.button("✕ Clear", key="clear_map_selection", use_container_width=True):
+                st.session_state["selected_map_asset"] = None
+                st.rerun()
