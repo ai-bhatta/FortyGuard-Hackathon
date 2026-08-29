@@ -1,6 +1,6 @@
 # AssetShield AI
 
-AssetShield AI is a hackathon MVP that turns FortyGuard climate intelligence into operational heat-risk priorities for California outdoor industrial assets. It loads demo assets, fetches or reuses clearly labelled climate data, calculates an explainable 0-100 heat exposure score, and exposes the result through both a FastAPI backend and a Streamlit dashboard.
+AssetShield AI is a hackathon MVP that turns FortyGuard climate intelligence into operational heat-risk priorities for California outdoor industrial assets. It loads demo assets, fetches or reuses clearly labelled climate data, calculates an explainable 0-100 heat exposure score, and exposes the result through a FastAPI backend, a Streamlit local dashboard, and a Vercel-ready static web UI.
 
 This is a transparent inspection-priority model. It does not predict exact equipment failure.
 
@@ -19,8 +19,10 @@ Done:
 - Backend report builder in `assetshield_backend.py`.
 - FastAPI endpoints in `api_server.py`.
 - Streamlit dashboard in `frontend/app.py`.
+- Vercel-ready static dashboard in `web/`.
 - Automated tests for scoring, backend payloads, and API endpoints.
 - `uv` project setup with `pyproject.toml` and `uv.lock`.
+- Node build scripts for Vercel in `package.json` and `scripts/`.
 
 Still optional / future work:
 
@@ -39,10 +41,14 @@ Still optional / future work:
 |   `-- fortyguard_cache.json  # cached demo climate data
 |-- fortyguard/                # FortyGuard API client
 |-- frontend/                  # Streamlit dashboard
+|-- web/                       # static dashboard for Vercel
+|-- scripts/                   # static web build/local server scripts
 |-- risk/                      # scoring and classification logic
 |-- services/                  # asset loading and FortyGuard service layer
 |-- tests/                     # pytest suite
+|-- package.json               # Vercel/static UI scripts
 |-- pyproject.toml             # uv project dependencies
+|-- vercel.json                # Vercel deployment config
 `-- uv.lock                    # locked dependency versions
 ```
 
@@ -142,12 +148,62 @@ uv run streamlit run frontend/app.py
 
 Expected behavior: Streamlit opens a local dashboard with KPI cards, filters, an asset map, a ranked risk table, asset details, and a lightweight AssetShield Copilot.
 
-### 5. Frontend Handoff Notes
+### 5. Test The Vercel Web UI Locally
+
+Build the static web app:
+
+```bash
+npm run build
+```
+
+Serve the static UI locally:
+
+```bash
+npm run dev
+```
+
+On Windows PowerShell, use:
+
+```powershell
+npm.cmd run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+Expected behavior: the browser shows a polished AssetShield operations dashboard with KPI cards, filters, map-style asset markers, a selected asset details panel, a risk ranking table, and copilot prompt buttons.
+
+By default, the static UI uses bundled demo data copied into `dist/data/`. If a deployed backend URL is available, set it in `web/index.html` before building:
+
+```html
+<script>
+  window.ASSETSHIELD_API_BASE_URL = "https://your-backend-url.example.com";
+</script>
+```
+
+### 6. Deploy The Web UI On Vercel
+
+From this repo, Vercel should use:
+
+```text
+Build Command: npm run build
+Output Directory: dist
+```
+
+These are already configured in `vercel.json`.
+
+If the FastAPI backend is hosted separately, add that backend URL to `window.ASSETSHIELD_API_BASE_URL` in `web/index.html` before deploying. If no hosted backend is available, the Vercel UI still works as a demo using bundled California cache data.
+
+### 7. Frontend Handoff Notes
 
 The frontend can either:
 
 - Import local Python data through `frontend/data.py`.
 - Call the FastAPI endpoints from `api_server.py`.
+- Use the static Vercel UI in `web/` for the deployed demo.
 
 For a cleaner team split, use the HTTP API as the contract:
 
@@ -160,5 +216,6 @@ For a cleaner team split, use the HTTP API as the contract:
 
 - Do not commit `.env`.
 - `.venv/`, `__pycache__/`, and `.pytest_cache/` are ignored.
+- `dist/` and `node_modules/` are ignored.
 - Cached data must be labelled as cached demo data during demos.
 - The score is for heat exposure prioritization, not failure prediction.
