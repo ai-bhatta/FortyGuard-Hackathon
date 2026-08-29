@@ -43,7 +43,7 @@ The application:
 - Classifies assets as Low, Moderate, High, or Critical.
 - Provides maintenance recommendations such as Monitor, Schedule Inspection, or Prioritize Inspection.
 - Shows risk information in a dashboard, map view, ranked table, and asset detail panel.
-- Includes a lightweight copilot-style decision support area for demo questions.
+- Includes an AssetShield Copilot demo area with default queries and deterministic built-in answers.
 
 ## How The Score Works
 
@@ -74,7 +74,7 @@ Each asset receives:
 - Asset risk map.
 - Ranked asset risk table.
 - Asset detail panel with score breakdown.
-- Simple copilot prompt buttons.
+- Copilot prompt buttons with default demo answers.
 - Cached demo data fallback for stable hackathon demos.
 - Automated tests for scoring, backend payloads, and API endpoints.
 
@@ -114,6 +114,7 @@ Backend:
 - FastAPI
 - FortyGuard API client
 - `requests`
+- `openai`
 - `python-dotenv`
 - `pytest`
 
@@ -266,6 +267,8 @@ If port 3000 is busy, the script will try the next available port, such as:
 ```text
 http://localhost:3001
 ```
+
+The static UI copilot uses built-in demo answers for the default queries, so it does not require an AI API key.
 
 ## Vercel Deployment
 

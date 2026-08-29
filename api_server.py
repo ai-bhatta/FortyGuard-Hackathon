@@ -4,11 +4,14 @@ import os
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 
 from assetshield_backend import build_asset_risk_report
 from services.assets import load_assets
 from services.fortyguard import FortyGuardService, FortyGuardServiceError
 
+
+load_dotenv()
 
 app = FastAPI(
     title="AssetShield AI Backend",
@@ -16,14 +19,26 @@ app = FastAPI(
     version="0.1.0",
 )
 
-cors_origins = [
+local_dev_origins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+    "http://127.0.0.1:3002",
+    "http://127.0.0.1:5173",
+]
+
+configured_cors_origins = [
     origin.strip()
     for origin in os.getenv(
         "ASSETSHIELD_CORS_ORIGINS",
-        "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173",
+        "",
     ).split(",")
     if origin.strip()
 ]
+cors_origins = list(dict.fromkeys(configured_cors_origins + local_dev_origins))
 
 app.add_middleware(
     CORSMiddleware,

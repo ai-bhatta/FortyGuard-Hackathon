@@ -126,12 +126,3 @@ def show_asset_details(df: pd.DataFrame):
             """,
             unsafe_allow_html=True,
         )
-
-    ask_col1, ask_col2 = st.columns([1, 3])
-    with ask_col1:
-        if st.button("💬 Ask Copilot about this asset", use_container_width=True):
-            st.session_state["pending_copilot_question"] = (
-                f"Why is {asset['asset_name']} ({asset['asset_id']}) rated "
-                f"{asset['risk_level']} risk, and what maintenance action do you recommend?"
-            )
-            st.rerun()

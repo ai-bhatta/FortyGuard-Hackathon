@@ -1,9 +1,18 @@
-const API_BASE_URL = (window.ASSETSHIELD_API_BASE_URL || "").replace(/\/$/, "");
+const configuredApiBaseUrl = (window.ASSETSHIELD_API_BASE_URL || "").replace(/\/$/, "");
+const localApiBaseUrl = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+  ? "http://127.0.0.1:8000"
+  : "";
+const API_BASE_URL = configuredApiBaseUrl || localApiBaseUrl;
 
 const state = {
   risks: [],
   filtered: [],
   selectedId: null,
+  map: null,
+  markerLayer: null,
+  tileLayer: null,
+  legendControl: null,
+  shouldFitMap: true,
 };
 
 const riskOrder = ["Critical", "High", "Moderate", "Low"];
@@ -13,7 +22,6 @@ const riskColors = {
   Moderate: "#d97706",
   Low: "#16a34a",
 };
-
 const $ = (id) => document.getElementById(id);
 
 async function init() {
@@ -23,7 +31,7 @@ async function init() {
   populateTypeFilter();
   bindEvents();
   applyFilters();
-  answerPrompt("inspect");
+  await answerPrompt("inspect");
 }
 
 function initTheme() {
@@ -209,14 +217,25 @@ function applyFilters() {
   if (!state.filtered.some((item) => item.asset_id === state.selectedId)) {
     state.selectedId = state.filtered[0]?.asset_id || state.risks[0]?.asset_id;
   }
+  state.shouldFitMap = true;
   render();
 }
 
 function render() {
+  renderSummary();
   renderKpis();
   renderMap();
   renderTable();
   renderDetails();
+}
+
+function renderSummary() {
+  const top = state.filtered[0] || state.risks[0];
+  const average = state.filtered.length
+    ? Math.round(state.filtered.reduce((sum, item) => sum + item.risk_score, 0) / state.filtered.length)
+    : 0;
+  $("summary-top").textContent = top ? `${top.asset_id} / ${top.risk_level}` : "No assets";
+  $("summary-average").textContent = state.filtered.length ? `${average}/100` : "--";
 }
 
 function renderKpis() {
@@ -228,7 +247,7 @@ function renderKpis() {
     Low: countRisk("Low"),
   };
   $("kpi-grid").innerHTML = Object.entries(counts).map(([label, value]) => `
-    <div class="kpi-card">
+    <div class="kpi-card ${label.replaceAll(" ", "-")}">
       <span>${label}</span>
       <strong>${value}</strong>
     </div>
@@ -241,39 +260,80 @@ function countRisk(level) {
 
 function renderMap() {
   $("visible-count").textContent = `${state.filtered.length} assets`;
-  const canvas = $("map-canvas");
-  const lats = state.risks.map((item) => item.latitude);
-  const lngs = state.risks.map((item) => item.longitude);
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
-
-  canvas.innerHTML = state.filtered.map((item) => {
-    const x = 8 + ((item.longitude - minLng) / (maxLng - minLng || 1)) * 84;
-    const y = 8 + ((maxLat - item.latitude) / (maxLat - minLat || 1)) * 84;
-    const size = 14 + item.risk_score / 8;
-    return `
-      <button
-        class="map-point ${item.risk_level}"
-        style="left:${x}%;top:${y}%;width:${size}px;height:${size}px"
-        title="${item.asset_name}: ${item.risk_score}/100"
-        data-id="${item.asset_id}">
-      </button>
+  const mapElement = $("map-canvas");
+  if (!window.L) {
+    mapElement.innerHTML = `
+      <div class="map-unavailable">
+        <strong>Interactive map could not load.</strong>
+        <span>Check your internet connection because the web demo loads Leaflet and OpenStreetMap tiles from public CDNs.</span>
+      </div>
     `;
-  }).join("");
+    return;
+  }
 
-  canvas.querySelectorAll(".map-point").forEach((point) => {
-    point.addEventListener("click", () => {
-      state.selectedId = point.dataset.id;
+  if (!state.map) {
+    mapElement.innerHTML = "";
+    state.map = L.map(mapElement, {
+      center: [37.25, -119.75],
+      zoom: 6,
+      minZoom: 5,
+      maxZoom: 15,
+      maxBounds: [[32.1, -125.0], [42.5, -113.5]],
+      maxBoundsViscosity: 0.65,
+      scrollWheelZoom: true,
+      zoomControl: true,
+    });
+
+    state.tileLayer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(state.map);
+
+    state.markerLayer = L.layerGroup().addTo(state.map);
+    state.legendControl = L.control({ position: "topright" });
+    state.legendControl.onAdd = () => {
+      const div = L.DomUtil.create("div", "map-legend leaflet-map-legend");
+      div.innerHTML = riskOrder.map((level) => `<span><i class="${level}"></i>${level}</span>`).join("");
+      return div;
+    };
+    state.legendControl.addTo(state.map);
+  }
+
+  state.markerLayer.clearLayers();
+  state.filtered.forEach((item) => {
+    const marker = L.circleMarker([item.latitude, item.longitude], {
+      radius: item.asset_id === state.selectedId ? 11 : 8 + item.risk_score / 18,
+      color: "#ffffff",
+      weight: item.asset_id === state.selectedId ? 4 : 3,
+      fillColor: riskColors[item.risk_level],
+      fillOpacity: 0.92,
+      opacity: 1,
+      className: item.asset_id === state.selectedId ? "risk-marker selected" : "risk-marker",
+    });
+    marker.bindTooltip(
+      `<strong>${item.asset_name}</strong><br>${item.asset_type}<br>${item.risk_level} / ${item.risk_score}/100`,
+      { direction: "top", offset: [0, -8] },
+    );
+    marker.on("click", () => {
+      state.selectedId = item.asset_id;
+      state.shouldFitMap = false;
       render();
     });
+    marker.addTo(state.markerLayer);
   });
+
+  if (state.shouldFitMap && state.filtered.length) {
+    const bounds = L.latLngBounds(state.filtered.map((item) => [item.latitude, item.longitude]));
+    state.map.fitBounds(bounds.pad(0.2), { maxZoom: 8, animate: true });
+    state.shouldFitMap = false;
+  }
+
+  window.requestAnimationFrame(() => state.map.invalidateSize());
 }
 
 function renderTable() {
   const rows = state.filtered.map((item, index) => `
-    <tr data-id="${item.asset_id}" class="${item.asset_id === state.selectedId ? "selected" : ""}">
+    <tr data-id="${item.asset_id}" class="${item.risk_level} ${item.asset_id === state.selectedId ? "selected" : ""}">
       <td>${index + 1}</td>
       <td><strong>${item.asset_name}</strong><br><small>${item.asset_id}</small></td>
       <td>${item.asset_type}</td>
@@ -332,6 +392,26 @@ function renderDetails() {
 }
 
 function answerPrompt(prompt) {
+  $("copilot-answer").innerHTML = `
+    <div>${formatAnswer(localCopilotAnswer(prompt))}</div>
+    <small class="answer-source">Default demo response</small>
+  `;
+}
+
+function formatAnswer(answer) {
+  return escapeHtml(answer || "No answer was returned.").replace(/\n/g, "<br>");
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function localCopilotAnswer(prompt) {
   const top = state.filtered[0] || state.risks[0];
   const critical = state.filtered.filter((item) => item.risk_level === "Critical");
   const high = state.filtered.filter((item) => item.risk_level === "High");
@@ -341,15 +421,15 @@ function answerPrompt(prompt) {
   if (!top) {
     answer = "No asset data is available.";
   } else if (prompt === "inspect") {
-    answer = `<strong>${top.asset_name}</strong> should be reviewed first. It has a ${top.risk_score}/100 heat exposure score, ${top.hours_above_threshold} hours above threshold, and a recommendation to ${top.recommendation.toLowerCase()}.`;
+    answer = `${top.asset_name} should be reviewed first. It has a ${top.risk_score}/100 heat exposure score, ${top.hours_above_threshold} hours above threshold, and a recommendation to ${top.recommendation.toLowerCase()}.`;
   } else if (prompt === "above") {
     answer = above.length
       ? `${above.length} assets are above their configured heat threshold: ${above.slice(0, 5).map((item) => item.asset_id).join(", ")}.`
       : "No visible assets are currently above their configured heat threshold.";
   } else {
-    answer = `The visible portfolio has ${critical.length} critical and ${high.length} high-risk assets. The highest priority is <strong>${top.asset_name}</strong>. These scores prioritize heat exposure and inspection attention, not certain equipment failure.`;
+    answer = `The visible portfolio has ${critical.length} critical and ${high.length} high-risk assets. The highest priority is ${top.asset_name}. These scores prioritize heat exposure and inspection attention, not certain equipment failure.`;
   }
-  $("copilot-answer").innerHTML = answer;
+  return answer;
 }
 
 init().catch((error) => {
