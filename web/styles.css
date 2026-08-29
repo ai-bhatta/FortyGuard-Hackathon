@@ -155,20 +155,36 @@ main {
 
 .topbar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 18px;
 }
 
+.topbar > div:first-child {
+  min-width: 0;
+}
+
 .topbar h2 {
   font-size: clamp(1.6rem, 3vw, 2.2rem);
+  line-height: 1.08;
 }
 
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex: 0 0 auto;
+  gap: 6px;
+  padding: 5px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(22, 32, 51, 0.08);
+}
+
+body[data-theme="dark"] .topbar-actions {
+  background: rgba(17, 24, 39, 0.72);
+  border-color: #334155;
 }
 
 .docs-link,
@@ -178,8 +194,8 @@ main {
   min-height: 38px;
   padding: 0 14px;
   color: var(--accent-strong);
-  background: #ffffff;
-  border: 1px solid var(--line);
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: 8px;
   cursor: pointer;
   text-decoration: none;
@@ -187,8 +203,27 @@ main {
 }
 
 .icon-button {
-  min-width: 44px;
-  padding: 0 12px;
+  display: inline-grid;
+  min-width: 38px;
+  width: 38px;
+  place-items: center;
+  padding: 0;
+}
+
+.icon-button img {
+  width: 20px;
+  height: 20px;
+}
+
+.docs-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.docs-link img {
+  width: 18px;
+  height: 18px;
 }
 
 .docs-link:hover,
@@ -204,8 +239,8 @@ body[data-theme="dark"] .ghost-button,
 body[data-theme="dark"] .prompt-grid button,
 body[data-theme="dark"] .icon-button {
   color: #ccfbf1;
-  background: #111827;
-  border-color: #334155;
+  background: transparent;
+  border-color: transparent;
 }
 
 body[data-theme="dark"] .docs-link:hover,
@@ -595,11 +630,15 @@ body[data-theme="dark"] .answer-box {
   }
 
   .topbar,
-  .topbar-actions,
   .panel-header,
   .asset-title {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .topbar-actions {
+    align-self: stretch;
+    justify-content: space-between;
   }
 
   .hero-grid,

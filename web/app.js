@@ -40,7 +40,7 @@ function setTheme(theme) {
   document.body.dataset.theme = theme;
   localStorage.setItem("assetshield-theme", theme);
   const isDark = theme === "dark";
-  $("theme-icon").textContent = isDark ? "Sun" : "Moon";
+  $("theme-icon").src = isDark ? "/assets/sun.svg" : "/assets/moon.svg";
   $("theme-toggle").setAttribute(
     "aria-label",
     isDark ? "Switch to light mode" : "Switch to dark mode",
