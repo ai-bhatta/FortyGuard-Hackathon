@@ -274,6 +274,12 @@ The static UI copilot uses built-in demo answers for the default queries, so it 
 
 The Vercel-ready frontend lives in `web/`.
 
+Live demo:
+
+```text
+https://fortyguardhackathon.vercel.app/
+```
+
 Vercel settings:
 
 ```text
