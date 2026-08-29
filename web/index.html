@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AssetShield AI</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-mark">AS</div>
+        <div>
+          <p class="eyebrow">Industrial Heat Intelligence</p>
+          <h1>AssetShield AI</h1>
+        </div>
+
+        <div class="control-group">
+          <label for="risk-filter">Risk Level</label>
+          <select id="risk-filter">
+            <option value="All">All levels</option>
+            <option value="Critical">Critical</option>
+            <option value="High">High</option>
+            <option value="Moderate">Moderate</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="type-filter">Asset Type</label>
+          <select id="type-filter">
+            <option value="All">All types</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="asset-search">Search</label>
+          <input id="asset-search" type="search" placeholder="Asset name or ID" />
+        </div>
+
+        <div class="status-card">
+          <span class="status-dot"></span>
+          <div>
+            <strong id="data-mode">Demo data</strong>
+            <small id="data-caption">Using bundled California cache</small>
+          </div>
+        </div>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">California Asset Network</p>
+            <h2>Heat Exposure Operations Center</h2>
+          </div>
+          <div class="topbar-actions">
+            <button id="theme-toggle" class="icon-button" type="button" aria-label="Switch to dark mode" title="Switch theme">
+              <img id="theme-icon" src="/assets/moon.svg" alt="" aria-hidden="true" />
+            </button>
+            <a class="docs-link" href="/data/assets.csv">
+              <img src="/assets/file-data.svg" alt="" aria-hidden="true" />
+              <span>Asset Data</span>
+            </a>
+          </div>
+        </header>
+
+        <section class="kpi-grid" id="kpi-grid"></section>
+
+        <section class="hero-grid">
+          <article class="panel map-panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Geographic View</p>
+                <h3>Asset Risk Map</h3>
+              </div>
+              <span id="visible-count" class="chip">0 assets</span>
+            </div>
+            <div class="map-canvas" id="map-canvas"></div>
+          </article>
+
+          <article class="panel detail-panel" id="detail-panel"></article>
+        </section>
+
+        <section class="content-grid">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Maintenance Queue</p>
+                <h3>Risk Ranking</h3>
+              </div>
+              <button id="reset-selection" class="ghost-button">Top asset</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Asset</th>
+                    <th>Type</th>
+                    <th>Temp</th>
+                    <th>Threshold</th>
+                    <th>Score</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="risk-table"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="panel copilot-panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Decision Support</p>
+                <h3>AssetShield Copilot</h3>
+              </div>
+            </div>
+            <div class="prompt-grid">
+              <button data-prompt="inspect">What should be inspected first?</button>
+              <button data-prompt="above">Which assets are above threshold?</button>
+              <button data-prompt="summary">Summarize the heat exposure.</button>
+            </div>
+            <div id="copilot-answer" class="answer-box"></div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      window.ASSETSHIELD_API_BASE_URL = "";
+    </script>
+    <script src="/app.js"></script>
+  </body>
+</html>

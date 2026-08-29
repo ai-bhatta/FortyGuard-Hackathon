@@ -1,0 +1,9 @@
+{
+  "name": "assetshield-ai-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build-web.mjs",
+    "dev": "node scripts/build-web.mjs && node scripts/serve-web.mjs dist"
+  }
+}

@@ -1,60 +1,166 @@
 # AssetShield AI
 
-AssetShield AI is a hackathon MVP that turns FortyGuard climate intelligence into operational heat-risk priorities for California outdoor industrial assets. It loads demo assets, fetches or reuses clearly labelled climate data, calculates an explainable 0-100 heat exposure score, and exposes the result through both a FastAPI backend and a Streamlit dashboard.
+AssetShield AI is a project built for the FortyGuard Hackathon by team **Asset Guards**.
 
-This is a transparent inspection-priority model. It does not predict exact equipment failure.
+Team members:
 
-## Current Status
+- Aimy Acksa Shaji
+- Taima Hoque
+- Asma Ahmed
 
-Done:
+## Project Overview
 
-- California demo asset dataset with 12 assets in `data/assets.csv`.
-- Cached California climate demo data in `data/fortyguard_cache.json`.
-- FortyGuard API client wrapper in `fortyguard/`.
-- Reusable service layer in `services/fortyguard.py`.
-- Asset loading and validation in `services/assets.py`.
-- Explainable scoring engine in `risk/scoring.py`.
-- Risk levels: Low, Moderate, High, Critical.
-- Maintenance recommendations: Monitor, Review during next maintenance window, Schedule Inspection, Prioritize Inspection.
-- Backend report builder in `assetshield_backend.py`.
-- FastAPI endpoints in `api_server.py`.
-- Streamlit dashboard in `frontend/app.py`.
+AssetShield AI helps operators understand which outdoor industrial assets are most exposed to heat and should be inspected first.
+
+Many companies manage equipment that sits outside all day, such as EV chargers, telecom nodes, transformers, pumps, solar inverters, batteries, sensors, HVAC units, and port equipment. During extreme heat, teams may not have enough time or staff to inspect everything at once. AssetShield AI turns location-based climate data into a simple operational priority list.
+
+The system uses FortyGuard climate intelligence for U.S.-based locations and demonstrates the workflow with California industrial assets. It calculates an explainable heat exposure score from 0 to 100, assigns a risk level, and recommends what the maintenance team should do next.
+
+AssetShield AI does **not** claim that equipment will fail. It prioritizes heat exposure and inspection attention.
+
+## The Problem
+
+Outdoor industrial assets are exposed to rising temperatures, direct sunlight, and long periods of heat stress. Maintenance teams often need to answer practical questions quickly:
+
+- Which assets need attention today?
+- Which assets are above their heat threshold?
+- Which locations have the highest heat exposure?
+- Why is one asset more urgent than another?
+- What should the team inspect first?
+
+Without a clear ranking system, teams may rely on manual checks, scattered spreadsheets, or incomplete local weather information.
+
+## The Solution
+
+AssetShield AI combines asset data with FortyGuard temperature intelligence to create a heat-risk operations dashboard.
+
+The application:
+
+- Loads a portfolio of California demo assets.
+- Uses cached demo climate data by default for reliable demos.
+- Can be configured to use the live FortyGuard API.
+- Calculates a transparent 0-100 heat exposure score.
+- Classifies assets as Low, Moderate, High, or Critical.
+- Provides maintenance recommendations such as Monitor, Schedule Inspection, or Prioritize Inspection.
+- Shows risk information in a dashboard, map view, ranked table, and asset detail panel.
+- Includes a lightweight copilot-style decision support area for demo questions.
+
+## How The Score Works
+
+The score is a transparent prioritization model. It considers:
+
+- Temperature severity: how far apparent temperature is above the asset threshold.
+- Time above threshold: how many hours the asset has elevated heat exposure.
+- Asset criticality: how important the asset is to operations.
+- Asset age: older assets receive more attention in this demo model.
+- Past heat incidents: previous issues add extra priority.
+
+Each asset receives:
+
+- `risk_score`: a number from 0 to 100.
+- `risk_level`: Low, Moderate, High, or Critical.
+- `recommendation`: a maintenance action.
+- `factors`: a breakdown explaining where the score came from.
+
+## Current Features
+
+- California demo asset dataset with 12 assets.
+- FortyGuard API client wrapper.
+- FastAPI backend endpoints for frontend integration.
+- Streamlit dashboard for local Python testing.
+- Vercel-ready static web dashboard.
+- Light mode and dark mode in the Vercel UI.
+- KPI cards for total, critical, high, moderate, and low assets.
+- Asset risk map.
+- Ranked asset risk table.
+- Asset detail panel with score breakdown.
+- Simple copilot prompt buttons.
+- Cached demo data fallback for stable hackathon demos.
 - Automated tests for scoring, backend payloads, and API endpoints.
-- `uv` project setup with `pyproject.toml` and `uv.lock`.
 
-Still optional / future work:
+## Business Aspect
 
-- Verify live FortyGuard calls with a real API key.
-- Replace cached demo data with cached responses captured from real successful FortyGuard California requests.
-- Connect the copilot to a real LLM if the team wants richer natural-language answers.
+AssetShield AI is positioned as a B2B SaaS product for organizations that manage outdoor infrastructure.
+
+Potential customers:
+
+- Utility companies
+- Telecom operators
+- EV charging networks
+- Solar farm operators
+- Industrial facility operators
+- Port and logistics operators
+- Equipment manufacturers
+
+Value proposition:
+
+- Helps teams prioritize limited maintenance resources.
+- Converts climate data into operational decisions.
+- Reduces guesswork during heat events.
+- Gives managers an explainable reason for inspection priority.
+- Supports future integration with asset management and work order systems.
+
+Possible business model:
+
+- Subscription pricing based on number of monitored assets or sites.
+- Enterprise plans for API integrations, custom thresholds, and reporting.
+- Future add-ons for automated alerts, historical trend analysis, and work-order routing.
+
+## Tech Stack
+
+Backend:
+
+- Python
+- FastAPI
+- FortyGuard API client
+- `requests`
+- `python-dotenv`
+- `pytest`
+
+Frontend:
+
+- Streamlit for local Python dashboard testing
+- Static HTML, CSS, and JavaScript for the Vercel-ready web UI
+- Vercel static deployment
+
+Data and tooling:
+
+- CSV demo asset inventory
+- JSON cached climate data
+- `uv` for Python dependency management
+- Node.js scripts for static web build and local serving
 
 ## Project Structure
 
 ```text
 .
-|-- api_server.py              # FastAPI HTTP API for frontend integration
-|-- assetshield_backend.py     # CLI/report builder
+|-- api_server.py              # FastAPI HTTP API
+|-- assetshield_backend.py     # CLI report builder
 |-- data/
 |   |-- assets.csv             # California demo asset inventory
 |   `-- fortyguard_cache.json  # cached demo climate data
 |-- fortyguard/                # FortyGuard API client
 |-- frontend/                  # Streamlit dashboard
+|-- web/                       # Vercel-ready static dashboard
+|-- scripts/                   # static web build and dev server scripts
 |-- risk/                      # scoring and classification logic
 |-- services/                  # asset loading and FortyGuard service layer
 |-- tests/                     # pytest suite
+|-- package.json               # web UI scripts
 |-- pyproject.toml             # uv project dependencies
-`-- uv.lock                    # locked dependency versions
+|-- vercel.json                # Vercel deployment config
+`-- uv.lock                    # locked Python dependency versions
 ```
 
-## Setup
+## Local Setup
 
-Install dependencies with `uv`:
+Install Python dependencies:
 
 ```bash
 uv sync
 ```
 
-Create a local `.env` file:
+Create a local environment file:
 
 ```bash
 cp .env.example .env
@@ -66,18 +172,19 @@ On Windows PowerShell:
 Copy-Item .env.example .env
 ```
 
-Add your FortyGuard key in `.env`:
+Add your FortyGuard API key in `.env`:
 
 ```env
 FORTYGUARD_API_KEY=your_real_key_here
 FORTYGUARD_BASE_URL=https://api.fortyguard.com
 ASSETSHIELD_USE_LIVE_API=false
 ASSETSHIELD_CACHE_PATH=data/fortyguard_cache.json
+ASSETSHIELD_CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 ```
 
-Keep `ASSETSHIELD_USE_LIVE_API=false` for stable cached demo mode. Set it to `true` when testing live FortyGuard data.
+Keep `ASSETSHIELD_USE_LIVE_API=false` for cached demo mode. Set it to `true` only when testing live FortyGuard calls.
 
-## Local Testing Guide
+## How To Test Locally
 
 ### 1. Run Automated Tests
 
@@ -91,15 +198,15 @@ Expected result:
 11 passed
 ```
 
-### 2. Test The Backend CLI
+### 2. Run The Backend CLI
 
 ```bash
 uv run python assetshield_backend.py
 ```
 
-Expected behavior: the command prints California assets ranked by risk score, highest first.
+This prints California assets ranked by heat exposure score.
 
-### 3. Start The FastAPI Backend
+### 3. Run The FastAPI Backend
 
 ```bash
 uv run uvicorn api_server:app --reload
@@ -126,39 +233,65 @@ Example:
 http://127.0.0.1:8000/risks/A001
 ```
 
-To test live FortyGuard mode, set your API key in `.env`, set `ASSETSHIELD_USE_LIVE_API=true`, then call:
-
-```text
-http://127.0.0.1:8000/risks?live=true
-```
-
 ### 4. Run The Streamlit Dashboard
-
-In a second terminal:
 
 ```bash
 uv run streamlit run frontend/app.py
 ```
 
-Expected behavior: Streamlit opens a local dashboard with KPI cards, filters, an asset map, a ranked risk table, asset details, and a lightweight AssetShield Copilot.
+This is useful for local Python-based testing and quick demos.
 
-### 5. Frontend Handoff Notes
+### 5. Run The Vercel-Ready Web UI Locally
 
-The frontend can either:
+Build and serve the static dashboard:
 
-- Import local Python data through `frontend/data.py`.
-- Call the FastAPI endpoints from `api_server.py`.
+```bash
+npm run dev
+```
 
-For a cleaner team split, use the HTTP API as the contract:
+On Windows PowerShell:
 
-- Dashboard cards: derive counts from `GET /risks`.
-- Map markers: use `latitude`, `longitude`, `risk_level`, and `risk_score` from `GET /risks`.
-- Asset detail panel: use `GET /risks/{asset_id}`.
-- Filters: call `GET /risks?risk_level=...` and `GET /risks?asset_type=...`.
+```powershell
+npm.cmd run dev
+```
 
-## Notes
+Open the URL printed in the terminal. It usually starts at:
+
+```text
+http://localhost:3000
+```
+
+If port 3000 is busy, the script will try the next available port, such as:
+
+```text
+http://localhost:3001
+```
+
+## Vercel Deployment
+
+The Vercel-ready frontend lives in `web/`.
+
+Vercel settings:
+
+```text
+Build Command: npm run build
+Output Directory: dist
+```
+
+These settings are already configured in `vercel.json`.
+
+The static UI can run with bundled California demo data. If the FastAPI backend is deployed separately, set the backend URL in `web/index.html`:
+
+```html
+<script>
+  window.ASSETSHIELD_API_BASE_URL = "https://your-backend-url.example.com";
+</script>
+```
+
+## Important Notes
 
 - Do not commit `.env`.
-- `.venv/`, `__pycache__/`, and `.pytest_cache/` are ignored.
-- Cached data must be labelled as cached demo data during demos.
-- The score is for heat exposure prioritization, not failure prediction.
+- Cached data should be clearly treated as demo data.
+- FortyGuard data must use U.S.-based locations.
+- The current demo uses California assets.
+- The risk score is for heat exposure prioritization, not failure prediction.
