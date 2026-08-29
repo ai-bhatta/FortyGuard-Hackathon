@@ -17,12 +17,38 @@ const riskColors = {
 const $ = (id) => document.getElementById(id);
 
 async function init() {
+  initTheme();
   state.risks = await loadRisks();
   state.selectedId = state.risks[0]?.asset_id || null;
   populateTypeFilter();
   bindEvents();
   applyFilters();
   answerPrompt("inspect");
+}
+
+function initTheme() {
+  const savedTheme = localStorage.getItem("assetshield-theme");
+  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+  setTheme(savedTheme || (prefersDark ? "dark" : "light"));
+  $("theme-toggle").addEventListener("click", () => {
+    const nextTheme = document.body.dataset.theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+  });
+}
+
+function setTheme(theme) {
+  document.body.dataset.theme = theme;
+  localStorage.setItem("assetshield-theme", theme);
+  const isDark = theme === "dark";
+  $("theme-icon").textContent = isDark ? "Sun" : "Moon";
+  $("theme-toggle").setAttribute(
+    "aria-label",
+    isDark ? "Switch to light mode" : "Switch to dark mode",
+  );
+  $("theme-toggle").setAttribute(
+    "title",
+    isDark ? "Switch to light mode" : "Switch to dark mode",
+  );
 }
 
 async function loadRisks() {
