@@ -280,28 +280,3 @@ Live demo:
 ```text
 https://fortyguardhackathon.vercel.app/
 ```
-
-Vercel settings:
-
-```text
-Build Command: npm run build
-Output Directory: dist
-```
-
-These settings are already configured in `vercel.json`.
-
-The static UI can run with bundled California demo data. If the FastAPI backend is deployed separately, set the backend URL in `web/index.html`:
-
-```html
-<script>
-  window.ASSETSHIELD_API_BASE_URL = "https://your-backend-url.example.com";
-</script>
-```
-
-## Important Notes
-
-- Do not commit `.env`.
-- Cached data should be clearly treated as demo data.
-- FortyGuard data must use U.S.-based locations.
-- The current demo uses California assets.
-- The risk score is for heat exposure prioritization, not failure prediction.
