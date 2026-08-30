@@ -174,6 +174,40 @@ function recommendation(level) {
   }[level];
 }
 
+// Fuller recommendation used in the detail panel and the copilot answers:
+// an action, a concrete suggested timeframe, and a one-line rationale.
+function recommendationDetail(level) {
+  return {
+    Low: {
+      action: "Monitor",
+      window: "Next routine inspection",
+      detail: "No action needed right now. Keep this asset in the normal monitoring rotation and re-check if conditions change.",
+    },
+    Moderate: {
+      action: "Review at next maintenance window",
+      window: "Within 30\u201360 days",
+      detail: "Add this asset to the queue for the next regularly scheduled maintenance visit rather than an emergency callout.",
+    },
+    High: {
+      action: "Schedule inspection",
+      window: "Within 1\u20132 weeks",
+      detail: "Heat exposure is elevated enough to warrant a dedicated inspection ahead of the normal maintenance cycle.",
+    },
+    Critical: {
+      action: "Prioritize inspection",
+      window: "Within 48\u201372 hours",
+      detail: "This asset is under severe heat stress. Treat it as an emergency or out-of-cycle maintenance priority.",
+    },
+  }[level];
+}
+
+// Plain-language explanation of what the temperature figures mean for a given asset.
+function temperatureExplainer(item) {
+  const delta = item.apparent_temperature_celsius - item.threshold_celsius;
+  const overUnder = delta >= 0 ? "above" : "below";
+  return `The <strong>apparent temperature</strong> is what the asset actually experiences on site (it factors in humidity and heat load, not just the air temperature) &mdash; currently ${item.apparent_temperature_celsius.toFixed(1)}\u00b0C. Its <strong>heat threshold</strong> of ${item.threshold_celsius.toFixed(1)}\u00b0C is the safe operating limit set for this specific asset. Right now it is running ${Math.abs(delta).toFixed(1)}\u00b0C ${overUnder} that limit, and it has stayed there for <strong>${item.hours_above_threshold} hour${item.hours_above_threshold === 1 ? "" : "s"}</strong> today &mdash; the longer an asset sits above threshold, the more the risk score climbs.`;
+}
+
 function clamp(value, min, max) {
   return Math.max(min, Math.min(value, max));
 }
@@ -376,7 +410,14 @@ function renderDetails() {
       <div class="mini-metric"><span>Above Threshold</span><strong>${item.hours_above_threshold} hrs</strong></div>
       <div class="mini-metric"><span>Criticality</span><strong>${item.criticality}/5</strong></div>
     </div>
-    <div class="recommendation">${item.recommendation}</div>
+    <p class="temp-explainer">${temperatureExplainer(item)}</p>
+    <div class="recommendation">
+      <div class="recommendation-header">
+        <strong>${recommendationDetail(item.risk_level).action}</strong>
+        <span class="recommendation-window">${recommendationDetail(item.risk_level).window}</span>
+      </div>
+      <p>${recommendationDetail(item.risk_level).detail}</p>
+    </div>
     <div class="factor-list">
       ${item.factors.map((factorItem) => `
         <div class="factor-row">
@@ -415,19 +456,26 @@ function localCopilotAnswer(prompt) {
   const top = state.filtered[0] || state.risks[0];
   const critical = state.filtered.filter((item) => item.risk_level === "Critical");
   const high = state.filtered.filter((item) => item.risk_level === "High");
+  const moderate = state.filtered.filter((item) => item.risk_level === "Moderate");
   const above = state.filtered.filter((item) => item.apparent_temperature_celsius > item.threshold_celsius);
+  const needsMaintenance = state.filtered.filter((item) => item.risk_level === "Critical" || item.risk_level === "High");
   let answer = "";
 
   if (!top) {
     answer = "No asset data is available.";
   } else if (prompt === "inspect") {
-    answer = `${top.asset_name} should be reviewed first. It has a ${top.risk_score}/100 heat exposure score, ${top.hours_above_threshold} hours above threshold, and a recommendation to ${top.recommendation.toLowerCase()}.`;
+    const topDetail = recommendationDetail(top.risk_level);
+    answer = `${top.asset_name} should be reviewed first. Its apparent temperature is ${top.apparent_temperature_celsius.toFixed(1)}\u00b0C, which is ${Math.abs(top.apparent_temperature_celsius - top.threshold_celsius).toFixed(1)}\u00b0C past its ${top.threshold_celsius.toFixed(1)}\u00b0C heat threshold, and it has held that for ${top.hours_above_threshold} hour(s) today \u2014 driving a ${top.risk_score}/100 heat exposure score. Recommended action: ${topDetail.action.toLowerCase()}, ${topDetail.window.toLowerCase()}.`;
   } else if (prompt === "above") {
     answer = above.length
-      ? `${above.length} assets are above their configured heat threshold: ${above.slice(0, 5).map((item) => item.asset_id).join(", ")}.`
-      : "No visible assets are currently above their configured heat threshold.";
+      ? `${above.length} asset(s) are running hotter than their configured heat threshold \u2014 meaning the apparent temperature on site now exceeds the safe operating limit set for that equipment: ${above.slice(0, 5).map((item) => item.asset_id).join(", ")}. The longer they stay above threshold, the higher their risk score climbs.`
+      : "No visible assets are currently above their configured heat threshold, meaning apparent temperatures are within each asset's safe operating range today.";
+  } else if (prompt === "maintenance") {
+    answer = needsMaintenance.length
+      ? `${needsMaintenance.length} asset(s) should be scheduled for maintenance ahead of the normal cycle: ${needsMaintenance.slice(0, 5).map((item) => `${item.asset_id} (${recommendationDetail(item.risk_level).window.toLowerCase()})`).join(", ")}. Critical assets should be booked within 48\u201372 hours as an emergency or out-of-cycle visit; High assets within 1\u20132 weeks. ${moderate.length} moderate-risk asset(s) can simply be added to the next regular maintenance window (30\u201360 days) instead of an urgent callout.`
+      : "No assets currently need maintenance scheduled outside the normal cycle \u2014 moderate and low risk assets can stay on the standard rotation.";
   } else {
-    answer = `The visible portfolio has ${critical.length} critical and ${high.length} high-risk assets. The highest priority is ${top.asset_name}. These scores prioritize heat exposure and inspection attention, not certain equipment failure.`;
+    answer = `The visible portfolio has ${critical.length} critical and ${high.length} high-risk assets out of ${state.filtered.length} shown. The highest priority is ${top.asset_name} at ${top.risk_score}/100. As a next step, critical assets should be booked for inspection within 48\u201372 hours and high-risk assets within 1\u20132 weeks; moderate and low-risk assets can stay on the standard maintenance rotation. These scores prioritize heat exposure and inspection attention, not certain equipment failure.`;
   }
   return answer;
 }
