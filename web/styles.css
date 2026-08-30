@@ -1281,3 +1281,111 @@ body[data-theme="dark"] .answer-box {
     min-height: 330px;
   }
 }
+
+/* =========================================================
+   CLICKABLE ASSET MAP MARKERS
+   ========================================================= */
+
+.leaflet-overlay-pane svg path {
+  pointer-events: auto !important;
+}
+
+.risk-marker {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  transition:
+    filter 0.2s ease,
+    stroke-width 0.2s ease;
+}
+
+.risk-marker:hover {
+  cursor: pointer !important;
+  filter:
+    drop-shadow(0 0 10px rgba(14, 124, 114, 0.75))
+    drop-shadow(0 8px 12px rgba(27, 38, 51, 0.28));
+}
+
+.risk-marker.selected {
+  cursor: pointer !important;
+  filter:
+    drop-shadow(0 0 12px rgba(14, 124, 114, 0.8))
+    drop-shadow(0 12px 18px rgba(27, 38, 51, 0.32));
+}
+
+/* Asset popup */
+
+.asset-popup {
+  min-width: 240px;
+  font-family: var(--font-body);
+}
+
+.asset-popup-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.asset-popup-header strong {
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.asset-popup-id {
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.asset-popup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.asset-popup-grid div {
+  padding: 8px;
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+
+.asset-popup-grid span {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.asset-popup-grid strong {
+  font-size: 0.9rem;
+}
+
+.popup-button {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 12px;
+  color: #ffffff;
+  background: var(--accent);
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.popup-button:hover {
+  background: var(--accent-strong);
+}
+
+.asset-popup-container .leaflet-popup-content {
+  margin: 14px;
+}
+
+.asset-popup-container .leaflet-popup-content-wrapper {
+  border-radius: 10px;
+}
+
