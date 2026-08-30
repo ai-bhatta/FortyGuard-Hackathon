@@ -4,9 +4,9 @@ AssetShield AI is a project built for the FortyGuard Hackathon by team **Asset G
 
 Team members:
 
-- Aimy Acksa Shaji
-- Taima Hoque
-- Asma Ahmed
+- Aimy Acksa Shaji 
+- Taima Hoque 
+- Asma Ahmed 
 
 ## Project Overview
 
@@ -42,7 +42,7 @@ The application:
 - Calculates a transparent 0-100 heat exposure score.
 - Classifies assets as Low, Moderate, High, or Critical.
 - Provides maintenance recommendations such as Monitor, Schedule Inspection, or Prioritize Inspection.
-- Shows risk information in a dashboard, map view, ranked table, and asset detail panel.
+- Shows risk information in a dashboard, interactive map view, ranked table, and asset detail panel.
 - Includes an AssetShield Copilot demo area with default queries and deterministic built-in answers.
 
 ## How The Score Works
@@ -71,7 +71,7 @@ Each asset receives:
 - Vercel-ready static web dashboard.
 - Light mode and dark mode in the Vercel UI.
 - KPI cards for total, critical, high, moderate, and low assets.
-- Asset risk map.
+- Interactive Leaflet/OpenStreetMap asset risk map for panning, zooming, and marker selection.
 - Ranked asset risk table.
 - Asset detail panel with score breakdown.
 - Copilot prompt buttons with default demo answers.
@@ -114,7 +114,6 @@ Backend:
 - FastAPI
 - FortyGuard API client
 - `requests`
-- `openai`
 - `python-dotenv`
 - `pytest`
 
@@ -122,6 +121,7 @@ Frontend:
 
 - Streamlit for local Python dashboard testing
 - Static HTML, CSS, and JavaScript for the Vercel-ready web UI
+- Leaflet with OpenStreetMap tiles for the interactive Vercel map
 - Vercel static deployment
 
 Data and tooling:
@@ -269,6 +269,7 @@ http://localhost:3001
 ```
 
 The static UI copilot uses built-in demo answers for the default queries, so it does not require an AI API key.
+The Vercel map uses Leaflet and OpenStreetMap tiles, so the real basemap requires internet access in the browser.
 
 ## Vercel Deployment
 
