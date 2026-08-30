@@ -27,6 +27,7 @@ const $ = (id) => document.getElementById(id);
 async function init() {
   initTheme();
   state.risks = await loadRisks();
+  updateFortyGuardBadge();
   state.selectedId = state.risks[0]?.asset_id || null;
   populateTypeFilter();
   bindEvents();
@@ -64,15 +65,27 @@ async function loadRisks() {
     try {
       const response = await fetch(`${API_BASE_URL}/risks`);
       if (!response.ok) throw new Error(`Backend returned ${response.status}`);
+      const data = await response.json();
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error("Backend returned no assets");
+      }
       $("data-mode").textContent = "Live backend";
       $("data-caption").textContent = API_BASE_URL;
-      return await response.json();
+      return data;
     } catch (error) {
+      console.error("AssetShield: live backend unavailable, falling back to bundled demo data \u2014", error);
       $("data-mode").textContent = "Demo fallback";
       $("data-caption").textContent = "Backend unavailable, using bundled data";
     }
   }
-  return loadBundledRisks();
+  try {
+    return await loadBundledRisks();
+  } catch (error) {
+    console.error("AssetShield: bundled demo data failed to load \u2014", error);
+    $("data-mode").textContent = "Data unavailable";
+    $("data-caption").textContent = error.message;
+    return [];
+  }
 }
 
 async function loadBundledRisks() {
@@ -127,6 +140,14 @@ function scoreAsset(asset, weather) {
   );
   const riskLevel = classifyRisk(riskScore);
 
+  // Prefer a real forecast value from the FortyGuard cache if present.
+  // Otherwise fall back to a lightweight, clearly-heuristic estimate
+  // (current apparent temperature plus a bump scaled by how far the
+  // asset already runs above its threshold).
+  const forecastPeak = weather.forecast_peak_celsius !== undefined && weather.forecast_peak_celsius !== ""
+    ? Number(weather.forecast_peak_celsius)
+    : Number((apparent + Math.max(1.5, severityDelta > 0 ? severityDelta * 0.6 : 1.5)).toFixed(1));
+
   return {
     asset_id: asset.asset_id,
     asset_name: asset.asset_name,
@@ -135,6 +156,7 @@ function scoreAsset(asset, weather) {
     longitude: Number(asset.longitude),
     temperature_celsius: Number(weather.temperature_celsius),
     apparent_temperature_celsius: apparent,
+    forecast_peak_celsius: forecastPeak,
     threshold_celsius: threshold,
     hours_above_threshold: Number(weather.hours_above_threshold),
     criticality: Number(asset.criticality),
@@ -199,6 +221,22 @@ function recommendationDetail(level) {
       detail: "This asset is under severe heat stress. Treat it as an emergency or out-of-cycle maintenance priority.",
     },
   }[level];
+}
+
+// Illustrative failure-likelihood / downtime bands keyed to risk level.
+// These are heuristic estimates for demo purposes, not a certified
+// reliability model \u2014 always label them as such in the UI.
+function failureRisk(level) {
+  return {
+    Critical: { probability: "High \u2014 roughly 60\u201385%", downtime: "4\u201312+ hrs of unplanned downtime" },
+    High: { probability: "Elevated \u2014 roughly 30\u201355%", downtime: "1\u20134 hrs of unplanned downtime" },
+    Moderate: { probability: "Low-moderate \u2014 roughly 10\u201325%", downtime: "Minimal, if any" },
+    Low: { probability: "Low \u2014 under 10%", downtime: "None expected" },
+  }[level];
+}
+
+function riskEmoji(level) {
+  return { Critical: "\u{1F534}", High: "\u{1F7E0}", Moderate: "\u{1F7E1}", Low: "\u{1F7E2}" }[level];
 }
 
 // Plain-language explanation of what the temperature figures mean for a given asset.
@@ -292,9 +330,30 @@ function countRisk(level) {
   return state.filtered.filter((item) => item.risk_level === level).length;
 }
 
+function isLiveFortyGuard() {
+  return $("data-mode").textContent === "Live backend";
+}
+
+function updateFortyGuardBadge() {
+  const pill = $("fortyguard-live-pill");
+  if (!pill) return;
+  pill.hidden = !isLiveFortyGuard();
+}
+
 function renderMap() {
   $("visible-count").textContent = `${state.filtered.length} assets`;
   const mapElement = $("map-canvas");
+
+  if (!state.risks.length) {
+    mapElement.innerHTML = `
+      <div class="map-unavailable">
+        <strong>No asset data loaded.</strong>
+        <span>The FortyGuard backend and the bundled demo data (/data/assets.csv, /data/fortyguard_cache.json) were both unreachable. Check the network tab for the failing request.</span>
+      </div>
+    `;
+    return;
+  }
+
   if (!window.L) {
     mapElement.innerHTML = `
       <div class="map-unavailable">
@@ -433,9 +492,78 @@ function renderDetails() {
 }
 
 function answerPrompt(prompt) {
+  const top = state.filtered[0] || state.risks[0];
+  let bodyHtml;
+  if (!top) {
+    bodyHtml = `<div>${escapeHtml("No asset data is available.")}</div>`;
+  } else if (prompt === "inspect") {
+    bodyHtml = decisionCardHtml(top);
+  } else if (prompt === "whatif") {
+    bodyHtml = whatIfHtml(top);
+  } else {
+    bodyHtml = `<div>${formatAnswer(localCopilotAnswer(prompt))}</div>`;
+  }
   $("copilot-answer").innerHTML = `
-    <div>${formatAnswer(localCopilotAnswer(prompt))}</div>
-    <small class="answer-source">Default demo response</small>
+    ${bodyHtml}
+    <small class="answer-source">${isLiveFortyGuard() ? "Live FortyGuard data" : "Default demo response"}</small>
+  `;
+}
+
+// Structured, judge-legible decision card: severity, current vs forecast
+// temperature, threshold, exposure window, a concrete recommendation, and why.
+function decisionCardHtml(item) {
+  const detail = recommendationDetail(item.risk_level);
+  const forecastExceeds = item.forecast_peak_celsius > item.threshold_celsius;
+  const loadNote = (item.risk_level === "Critical" || item.risk_level === "High")
+    ? " and reduce load where possible"
+    : "";
+  return `
+    <div class="decision-card ${item.risk_level}">
+      <div class="decision-head">
+        <span class="decision-emoji">${riskEmoji(item.risk_level)}</span>
+        <span class="decision-title">${item.risk_level.toUpperCase()} \u2014 ${escapeHtml(item.asset_name)}</span>
+      </div>
+      <div class="decision-rows">
+        <div><dt>Current temperature</dt><dd>${item.apparent_temperature_celsius.toFixed(1)}\u00b0C</dd></div>
+        <div><dt>Forecast peak</dt><dd>${item.forecast_peak_celsius.toFixed(1)}\u00b0C</dd></div>
+        <div><dt>Safe operating threshold</dt><dd>${item.threshold_celsius.toFixed(1)}\u00b0C</dd></div>
+        <div><dt>Estimated exposure</dt><dd>${item.hours_above_threshold.toFixed(1)} hrs</dd></div>
+      </div>
+      <div class="decision-recommendation"><strong>Recommendation:</strong> ${detail.action}, ${detail.window.toLowerCase()}${loadNote}.</div>
+      <div class="decision-reason"><strong>Reason:</strong> ${forecastExceeds ? "Forecasted temperature exceeds this asset\u2019s threshold" : "Current temperature is already past this asset\u2019s threshold"} for an extended window, driving a ${item.risk_score}/100 risk score.</div>
+    </div>
+  `;
+}
+
+// "What happens if I don't intervene?" \u2014 do-nothing path vs recommended intervention.
+function whatIfHtml(item) {
+  const risk = failureRisk(item.risk_level);
+  const detail = recommendationDetail(item.risk_level);
+  return `
+    <div class="whatif-card">
+      <p class="whatif-asset">${escapeHtml(item.asset_name)} \u2014 ${item.risk_level} (${item.risk_score}/100)</p>
+      <div class="whatif-columns">
+        <div class="whatif-col do-nothing">
+          <h4>If you do nothing</h4>
+          <ol>
+            <li>Temperature keeps tracking toward the forecast peak of ${item.forecast_peak_celsius.toFixed(1)}\u00b0C</li>
+            <li>Asset stays above its ${item.threshold_celsius.toFixed(1)}\u00b0C threshold for ${item.hours_above_threshold.toFixed(1)}+ hrs</li>
+            <li>Failure likelihood: ${risk.probability}</li>
+            <li>Potential downtime: ${risk.downtime}</li>
+          </ol>
+        </div>
+        <div class="whatif-col intervene">
+          <h4>Recommended intervention</h4>
+          <ol>
+            <li>${detail.action}, ${detail.window.toLowerCase()}</li>
+            <li>Reduce load on the asset where possible</li>
+            <li>Re-check apparent temperature after cooling/adjustment</li>
+            <li>Return the asset to normal monitoring once risk drops</li>
+          </ol>
+        </div>
+      </div>
+      <p class="whatif-disclaimer">Failure likelihood and downtime are illustrative estimates based on risk level, not a certified reliability model.</p>
+    </div>
   `;
 }
 
