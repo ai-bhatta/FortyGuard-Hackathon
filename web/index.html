@@ -71,6 +71,14 @@
           </div>
         </header>
 
+        <section class="fortyguard-banner" aria-label="FortyGuard integration">
+          <div>
+            <p class="fortyguard-kicker">Powered by FortyGuard Temperature Intelligence</p>
+            <p class="fortyguard-sub">Real-time + forecasted hyperlocal temperature data</p>
+          </div>
+          <span id="fortyguard-live-pill" class="live-pill" hidden>&#9679; Live FortyGuard Data</span>
+        </section>
+
         <section class="summary-strip" aria-label="Portfolio summary">
           <div>
             <span>Highest Priority</span>
@@ -141,6 +149,7 @@
               <button data-prompt="inspect">What should be inspected first?</button>
               <button data-prompt="above">Which assets are above threshold?</button>
               <button data-prompt="maintenance">What maintenance should be scheduled?</button>
+              <button data-prompt="whatif">What happens if I don't intervene?</button>
               <button data-prompt="summary">Summarize the heat exposure.</button>
             </div>
             <div id="copilot-answer" class="answer-box"></div>
